@@ -1,0 +1,44 @@
+#ifndef NEURAL_NET_LAYER_SIMPLE_RNN_H
+#define NEURAL_NET_LAYER_SIMPLE_RNN_H
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "STDTypeDefinition.h"
+#include "NeuralNetLayerType.h"
+#include "NeuralNetLayerActivation.h"
+
+//=====================================================================================
+//  SimpleRNNëwÉCÉìÉ^Å[ÉtÉFÅ[ÉXéÊìæ
+//=====================================================================================
+void
+NeuralNetLayerSimpleRNN_getInterface(LayerFuncTable* pInterface);
+
+//=====================================================================================
+//  SimpleRNNëwÅ@ç≈ëÂåÎç∑ì`îdéûä‘ÇÃê›íË
+//=====================================================================================
+bool_t
+NeuralNetLayerSimpleRNN_setMaxPropagationTime(handle_t hLayer, uint32_t maxPropagationTime);
+
+//=====================================================================================
+//  SimpleRNNëwçÏê¨
+//=====================================================================================
+bool_t
+NeuralNetLayerSimpleRNN_constructLayerData(
+	uint32_t*	pBuffer,
+	uint32_t	sizeOfBufferIn32BitWord, 
+	uint32_t*	pInputHeight, 
+	uint32_t*	pInputWidth,
+	uint32_t*	pInputChannel,
+	uint32_t	unit,
+	NeuralNetActivationType activation,
+	bool_t		returnSequence,
+	uint32_t*	pSizeOfLayerIn32BitWord);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

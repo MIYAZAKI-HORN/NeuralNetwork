@@ -1,0 +1,26 @@
+CC	:= gcc
+
+CFLAGS	:= -c -O2 -W -I./Model -I./Helper -I./Test
+LFLAGS	:= -lm -Wall
+
+SOURCE	:= 	./main_regression.c						\
+			./Helper/LOG_Function.c			\
+			./Helper/NeuralNetModelConstructor.c	\
+
+OBJS	:= 	./main_regression.o					\
+			./LOG_Function.o			\
+			./NeuralNetModelConstructor.o		\
+
+LIBRARY	  := ./Model/SequentialNet.lib
+
+PROGRAM	  := sample_regression.exe
+
+
+build:
+	$(CC) $(CFLAGS) $(SOURCE)
+	$(CC) $(OBJS) $(LIBRARY) $(LFLAGS) -o $(PROGRAM)
+	rm *.o
+
+clean:
+	rm $(PROGRAM)
+	rm *.o
