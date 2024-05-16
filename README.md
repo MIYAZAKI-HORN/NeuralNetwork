@@ -1,5 +1,9 @@
 # NeuralNetwork
- Neural network written in C
+ C言語記述のニューラルネットワークソフトウエア
+ (Neural network written in C)
+ 
+ -現在、ソースコード中のすべてのコメントは日本語で記述されています。
+  (Currently, all comments in the source code are written in Japanese.)
  
  -Supports the following layer modules (1 tensor input, 1 tensor output type)
 	Dense(Affine)
@@ -20,8 +24,7 @@
 	
  -functionality
   	The layer modules are capable of forward propagation/back propagation (learning).
-	Optimizer algorithms support:
-		MomentumSGD/RMSProp/Adam
+	Optimizer algorithms support : MomentumSGD/RMSProp/Adam
 	You can build a sequential neural network by loading sequential layer data with headers into the SequentialNet model.
 	When performing additional learning to original model, the learning layers can be fixed by specified the number counted from the final layer.
 
