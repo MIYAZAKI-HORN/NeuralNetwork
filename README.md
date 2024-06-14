@@ -30,7 +30,7 @@
 
 ## System requirement
  	All softwares are written in C language and compatible with MPU/MCP/DSP with 32bit/64bit C compiler available.
-	Designed with object orientation (encapsulation, virtual functions), it is easy to add new modules.
+	Designed with object-oriented style (encapsulation, virtual functions), it is easy to add new modules.
 	Does not use system calls such as malloc (no OS required).
 	Operations use single-precision floating point numbers. Maintains the necessary calculation accuracy by using a combination of function tables and algorithms without using math functions.
 	Reduce the amount of calculations by writing source code by effectively using pointers.
