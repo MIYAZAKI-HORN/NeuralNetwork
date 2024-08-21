@@ -37,7 +37,7 @@
 	Contains API functions necessary for learning with multiple CPU cores.
 	
 ## Sample programs
- 	classification problem
+	classification problem
 		Build a fully connected neural network or a convolutional neural network,
 		Giving initial values to the parameters of the neural network, perform learning on the specified number of epochs.
 		The cross-entropy error and classification rate are displayed sequentially for the training data and validation data.
