@@ -609,7 +609,7 @@ relu_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim,flt32_t
 }
 
 void
-relu_backword(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim, flt32_t alpha) {
+relu_backward(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim, flt32_t alpha) {
 	while (dim--) {
 		if (*pX > 0.0f) {
 			*pInput = (*pLoss);
@@ -644,7 +644,7 @@ tanh_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim) {
 }
 
 void
-tanh_backword(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim) {
+tanh_backward(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim) {
 	//1 - y*y
 	while (dim--) {
 		*pInput++ = (*pLoss++) * (1.0f - (*pY) * (*pY));
@@ -669,7 +669,7 @@ sigmoid_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim) {
 }
 
 void
-sigmoid_backword(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim) {
+sigmoid_backward(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim) {
 	while (dim--) {
 		*pInput++ = (*pLoss++) * (*pY) * (1.0f - (*pY));
 		pY++;
@@ -734,7 +734,7 @@ softmax_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim) {
 }
 
 void
-softmax_backword(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim) {
+softmax_backward(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim) {
 	while (dim--) {
 		*pInput++ = (*pLoss++) * (*pY) * (1.0f - (*pY));
 		pY++;

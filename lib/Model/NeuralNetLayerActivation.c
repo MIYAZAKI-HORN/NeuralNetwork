@@ -262,7 +262,7 @@ NeuralNetLayerReluActivation_backward(handle_t hLayer,PropagationInfo* pPropagat
 	//逆伝搬
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
-	relu_backword(pReluActivationNeuralNetLayer->pX, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size, pReluActivationNeuralNetHeader->alpha);
+	relu_backward(pReluActivationNeuralNetLayer->pX, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size, pReluActivationNeuralNetHeader->alpha);
 	//---------------------------------------------------------------------------------
 	//逆伝搬出力データ形状
 	//---------------------------------------------------------------------------------
@@ -288,7 +288,7 @@ NeuralNetLayerTanhActivation_backward(handle_t hLayer, PropagationInfo* pPropaga
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	//微分：1 - y*y
-	tanh_backword(pTanhActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
+	tanh_backward(pTanhActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
 	//---------------------------------------------------------------------------------
 	//逆伝搬出力データ形状
 	//---------------------------------------------------------------------------------
@@ -314,7 +314,7 @@ NeuralNetLayerSigmoidActivation_backward(handle_t hLayer, PropagationInfo* pProp
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	//微分：y(1 - y)
-	sigmoid_backword(pSigmoidActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
+	sigmoid_backward(pSigmoidActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
 	//---------------------------------------------------------------------------------
 	//逆伝搬出力データ形状
 	//---------------------------------------------------------------------------------
@@ -340,7 +340,7 @@ NeuralNetLayerSoftmaxActivation_backward(handle_t hLayer, PropagationInfo* pProp
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	//微分：y(1 - y) //出力と同じ次元の場合はsigmoidと同じ
-	softmax_backword(pSoftmaxActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
+	softmax_backward(pSoftmaxActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
 	//---------------------------------------------------------------------------------
 	//逆伝搬出力データ形状
 	//---------------------------------------------------------------------------------

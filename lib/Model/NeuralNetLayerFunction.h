@@ -12,7 +12,7 @@ extern "C" {
 //  sigmoid
 //=====================================================================================
 void	sigmoid_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim);
-void	sigmoid_backword(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
+void	sigmoid_backward(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
 
 //=====================================================================================
 //  WX+B
@@ -24,19 +24,19 @@ void	weight_matrix_with_bias_backward(flt32_t* pInputBuffer, uint32_t inputDim, 
 //  relu
 //=====================================================================================
 void	relu_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim, flt32_t alpha);
-void	relu_backword(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim, flt32_t alpha);
+void	relu_backward(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim, flt32_t alpha);
 
 //=====================================================================================
 //  tanh
 //=====================================================================================
 void	tanh_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim);
-void	tanh_backword(flt32_t* pY,flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
+void	tanh_backward(flt32_t* pY,flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
 
 //=====================================================================================
 //  softmax
 //=====================================================================================
 void	softmax_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim);
-void	softmax_backword(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
+void	softmax_backward(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
 
 //=====================================================================================
 // sqrt

@@ -377,16 +377,16 @@ NeuralNetLayerSimpleRNN_backward(handle_t hLayer,PropagationInfo* pPropagationIn
 			size = pSimpleRNNNeuralNetHeader->unit;
 			switch (pSimpleRNNNeuralNetHeader->activation) {
 			case NEURAL_NET_ACTIVATION_RELU:
-				relu_backword(pBPDataT, pOutputTime, pOutputTime, size,0.0f);
+				relu_backward(pBPDataT, pOutputTime, pOutputTime, size,0.0f);
 				break;
 			case NEURAL_NET_ACTIVATION_TANH:
-				tanh_backword(pBPDataT, pOutputTime, pOutputTime, size);
+				tanh_backward(pBPDataT, pOutputTime, pOutputTime, size);
 				break;
 			case NEURAL_NET_ACTIVATION_SIGMOID:
-				sigmoid_backword(pBPDataT, pOutputTime, pOutputTime, size);
+				sigmoid_backward(pBPDataT, pOutputTime, pOutputTime, size);
 				break;
 			case NEURAL_NET_ACTIVATION_SOFTMAX:
-				softmax_backword(pBPDataT, pOutputTime, pOutputTime, size);
+				softmax_backward(pBPDataT, pOutputTime, pOutputTime, size);
 				break;
 			default:
 				break;
