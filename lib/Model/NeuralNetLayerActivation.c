@@ -3,8 +3,6 @@
 #include "NeuralNetLayerFunction.h"
 #include "NeuralNetLayerActivation.h"
 
-#define DEFAULT_RELU_ALPHA	(0.0f)
-
 //=====================================================================================
 //  Activation層ブロック情報ヘッダー
 //=====================================================================================
@@ -440,11 +438,11 @@ NeuralNetLayerActivation_getParameters(handle_t hLayer, flt32_t** ppParameters, 
 static
 bool_t
 NeuralNetLayerTanhActivation_getLayerInformation(
-	uint32_t* pLayerData,
+	uint32_t*	pLayerData,
 	bool_t		fEnableLearning,
-	uint32_t* pLayerObjectSizeIn32BitWord,
-	uint32_t* pNumberOfLearningParameters,
-	uint32_t* pTempWorkAreaSizeIn32BitWord,
+	uint32_t*	pLayerObjectSizeIn32BitWord,
+	uint32_t*	pNumberOfLearningParameters,
+	uint32_t*	pTempWorkAreaSizeIn32BitWord,
 	DataShape* pInputShape,
 	DataShape* pOutputShape) {
 	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pLayerData;
@@ -585,6 +583,61 @@ NeuralNetLayerSoftmaxActivation_getLayerInformation(
 	}
 	if (pOutputShape != NULL) {
 		DataShape_construct(pOutputShape, pNeuralNetHeader->inHeight, pNeuralNetHeader->inWidth, pNeuralNetHeader->inChannel);
+	}
+	return TRUE;
+}
+
+//=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+//activation common
+static
+bool_t
+NeuralNetLayerActivation_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	ActivationNeuralNetHeader* pActivationNeuralNetHeader = (ActivationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	ReluActivationNeuralNetHeader* pReluActivationNeuralNetHeader = (ReluActivationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pReluActivationNeuralNetHeader;
+	if (pReluActivationNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		switch (pActivationNeuralNetHeader->activation) {
+		case NEURAL_NET_ACTIVATION_RELU:
+			*pNumberOfParameters = 2;	//activation,nalpha
+			break;
+		case NEURAL_NET_ACTIVATION_TANH:
+		case NEURAL_NET_ACTIVATION_SIGMOID:
+		case NEURAL_NET_ACTIVATION_SOFTMAX:
+			*pNumberOfParameters = 1;	//activation
+			break;
+		default:
+			return FALSE;
+		}
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		switch (pActivationNeuralNetHeader->activation) {
+		case NEURAL_NET_ACTIVATION_RELU:
+			if (parameterArraySize < 2) {
+				return FALSE;
+			}
+			pParameterArray[0] = (flt32_t)pActivationNeuralNetHeader->activation;
+			pParameterArray[1] = pReluActivationNeuralNetHeader->alpha;
+			break;
+		case NEURAL_NET_ACTIVATION_TANH:
+		case NEURAL_NET_ACTIVATION_SIGMOID:
+		case NEURAL_NET_ACTIVATION_SOFTMAX:
+			pParameterArray[0] = (flt32_t)pActivationNeuralNetHeader->activation;
+			break;
+		default:
+			return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -744,6 +797,7 @@ NeuralNetLayerReluActivation_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerActivation_update;								//super
 	pInterface->pInitializeParameters = NeuralNetLayerActivation_initializeParameters;	//super
 	pInterface->pGetParameters = NeuralNetLayerActivation_getParameters;				//super
+	pInterface->pGetHyperParameters = NeuralNetLayerActivation_getHyperParameters;		//super
 }
 
 //tanh
@@ -757,6 +811,7 @@ NeuralNetLayerTanhActivation_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerActivation_update;								//super
 	pInterface->pInitializeParameters = NeuralNetLayerActivation_initializeParameters;	//super
 	pInterface->pGetParameters = NeuralNetLayerActivation_getParameters;				//super
+	pInterface->pGetHyperParameters = NeuralNetLayerActivation_getHyperParameters;		//super
 }
 
 //sigmoid
@@ -770,6 +825,7 @@ NeuralNetLayerSigmoidActivation_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerActivation_update;								//super
 	pInterface->pInitializeParameters = NeuralNetLayerActivation_initializeParameters;	//super
 	pInterface->pGetParameters = NeuralNetLayerActivation_getParameters;				//super
+	pInterface->pGetHyperParameters = NeuralNetLayerActivation_getHyperParameters;		//super
 }
 
 //softmax
@@ -783,6 +839,7 @@ NeuralNetLayerSoftmaxActivation_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerActivation_update;								//super
 	pInterface->pInitializeParameters = NeuralNetLayerActivation_initializeParameters;	//super
 	pInterface->pGetParameters = NeuralNetLayerActivation_getParameters;				//super
+	pInterface->pGetHyperParameters = NeuralNetLayerActivation_getHyperParameters;		//super
 }
 
 //helper
@@ -816,6 +873,7 @@ NeuralNetLayerReluActivation_constructLayerData(
 	uint32_t*	pInputHeight,
 	uint32_t*	pInputWidth,
 	uint32_t*	pInputChannel,
+	flt32_t		negative_slope,
 	uint32_t*	pSizeOfLayerIn32BitWord)
 {
 	uint32_t	sizeHeader;
@@ -861,7 +919,7 @@ NeuralNetLayerReluActivation_constructLayerData(
 		NeuralNetHeader_construct(&pActivationNeuralNetHeader->super, NET_LAYER_ACTIVATION, inHeight, inWidth, inChannel, sizeLayer);
 		pActivationNeuralNetHeader->activation = NEURAL_NET_ACTIVATION_RELU;
 		pReluActivationNeuralNetHeader = (ReluActivationNeuralNetHeader*)pActivationNeuralNetHeader;
-		pReluActivationNeuralNetHeader->alpha = DEFAULT_RELU_ALPHA;
+		pReluActivationNeuralNetHeader->alpha = negative_slope;
 		pLayer += sizeHeader;
 	}
 	//---------------------------------------------------------------------------------
@@ -1072,7 +1130,7 @@ NeuralNetLayerActivation_constructLayerData(
 {
 	switch (activation) {
 	case NEURAL_NET_ACTIVATION_RELU:
-		return NeuralNetLayerReluActivation_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, pSizeOfLayerIn32BitWord);
+		return NeuralNetLayerReluActivation_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, 0.0f,pSizeOfLayerIn32BitWord);
 		break;
 	case NEURAL_NET_ACTIVATION_TANH:
 		return NeuralNetLayerTanhActivation_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, pSizeOfLayerIn32BitWord);

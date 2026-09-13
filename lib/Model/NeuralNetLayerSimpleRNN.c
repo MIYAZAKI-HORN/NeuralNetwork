@@ -521,12 +521,12 @@ NeuralNetLayerSimpleRNN_initializeParameters(handle_t hLayer, handle_t hRandomVa
 	//---------------------------------------------------------------------------------
 	//W
 	paramSize = pSimpleRNNNeuralNetHeader->unit * nInputDim;
-	normSize = paramSize;
-	set_random_initial_values_by_sqrt(hRandomValueGenerator, pW, paramSize, normSize);
+	normSize = nInputDim;	//入力ノード数（入力次元）
+	set_random_initial_values_by_he(hRandomValueGenerator, pW, paramSize, normSize);
 	//U
 	paramSize = pSimpleRNNNeuralNetHeader->unit * pSimpleRNNNeuralNetHeader->unit;
-	normSize = paramSize;
-	set_random_initial_values_by_sqrt(hRandomValueGenerator, pU, paramSize, normSize);
+	normSize = pSimpleRNNNeuralNetHeader->unit;	//入力ノード数（入力次元）
+	set_random_initial_values_by_he(hRandomValueGenerator, pU, paramSize, normSize);
 	//B
 	paramSize = pSimpleRNNNeuralNetHeader->unit;
 	set_constant_initial_values(pB, paramSize, 0.0f);
@@ -658,6 +658,40 @@ NeuralNetLayerSimpleRNN_getParameters(handle_t hLayer, flt32_t** ppParameters, u
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerSimpleRNN_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	SimpleRNNNeuralNetHeader* pSimpleRNNNeuralNetHeader = (SimpleRNNNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pSimpleRNNNeuralNetHeader;
+	if (pSimpleRNNNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 3;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		if (parameterArraySize >= 3) {
+			pParameterArray[0] = (flt32_t)pSimpleRNNNeuralNetHeader->unit;
+			pParameterArray[1] = (flt32_t)pSimpleRNNNeuralNetHeader->activation;
+			pParameterArray[2] = (flt32_t)pSimpleRNNNeuralNetHeader->returnSequence;
+		}
+		else {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -730,6 +764,7 @@ NeuralNetLayerSimpleRNN_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerSimpleRNN_update;
 	pInterface->pInitializeParameters = NeuralNetLayerSimpleRNN_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerSimpleRNN_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerSimpleRNN_getHyperParameters;
 }
 
 //=====================================================================================

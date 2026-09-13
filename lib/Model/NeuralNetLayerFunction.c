@@ -760,8 +760,8 @@ flt32_t low_cost_sqrt(const flt32_t x, uint32_t iterlations)
 //-------------------------------------------------------------------------
 void
 set_random_initial_values(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, flt32_t factor) {
-	uint32_t i;
-	flt32_t* pParameter;
+	uint32_t	i;
+	flt32_t*	pParameter;
 	i = arraySize;
 	pParameter = pParameterArray;
 	while (i--) {
@@ -774,15 +774,51 @@ set_random_initial_values(handle_t hRandomValueGenerator, flt32_t* pParameterArr
 //-------------------------------------------------------------------------
 void
 set_random_initial_values_by_sqrt(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, uint32_t normSize) {
-	uint32_t   i;
-	flt32_t* pParameter;
-	flt32_t    factor;
+	uint32_t	i;
+	flt32_t*	pParameter;
+	flt32_t		factor;
 	i = arraySize;
 	pParameter = pParameterArray;
 	factor = 1.0f / (flt32_t)(normSize);
 	factor = low_cost_sqrt(factor, 1);
 	while (i--) {
 		*pParameter++ = RandomValueGenerator_getFloatingPointValue(hRandomValueGenerator, factor);
+	}
+}
+
+//-------------------------------------------------------------------------
+//初期値設定:Heの初期化（Kaiming Initialization）
+//ReLU関数やLeakyReLU関数を利用する場合のデファクトスタンダード σ=√(2/parameter size)
+//parameter size:重みに掛け合わされるパメタサイズ(fan-in)
+//-------------------------------------------------------------------------
+void
+set_random_initial_values_by_he(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, uint32_t normSize) {
+	uint32_t	i,j;
+	flt32_t*	pParameter;
+	flt32_t		sigma;
+	flt32_t		sum;
+	flt32_t		normalDistribution;
+	i = arraySize;
+	pParameter = pParameterArray;
+	//---------------------------------------------------------------------------------
+	// Heの初期値の標準偏差sigma = sqrt(2 / fan_in)を計算する
+	//---------------------------------------------------------------------------------
+	sigma = 2.0f / (flt32_t)(normSize);
+	sigma = low_cost_sqrt(sigma, 1);
+	while (i--) {
+		//---------------------------------------------------------------------------------
+		// 12個の一様乱数の和から6を引いて標準正規分布 N(0, 1) を近似する
+		//---------------------------------------------------------------------------------
+		sum = 0.0f;
+		j = 12;
+		while (j--) {
+			sum += RandomValueGenerator_getFloatingPointValue(hRandomValueGenerator, 1.0f);
+		}
+		normalDistribution = sum - 6.0f;
+		//---------------------------------------------------------------------------------
+		// 標準偏差を乗算してパラメタ値を生成する
+		//---------------------------------------------------------------------------------
+		*pParameter++ = (normalDistribution * sigma);
 	}
 }
 
@@ -799,3 +835,4 @@ set_constant_initial_values(flt32_t* pParameterArray, uint32_t arraySize, flt32_
 		*pParameter++ = value;
 	}
 }
+

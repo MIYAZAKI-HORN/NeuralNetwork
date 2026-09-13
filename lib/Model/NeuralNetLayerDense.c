@@ -204,8 +204,8 @@ NeuralNetLayerDense_initializeParameters(handle_t hLayer, handle_t hRandomValueG
 	//---------------------------------------------------------------------------------
 	//W
 	paramSize = pDenseNeuralNetHeader->unit * nInput;
-	normSize = paramSize;
-	set_random_initial_values_by_sqrt(hRandomValueGenerator, pW, paramSize, normSize);
+	normSize = nInput;	//入力ノード数（入力次元）
+	set_random_initial_values_by_he(hRandomValueGenerator, pW, paramSize, normSize);
 	//B
 	paramSize = pDenseNeuralNetHeader->unit;
 	set_constant_initial_values(pB, paramSize, 0.0f);
@@ -287,6 +287,38 @@ NeuralNetLayerDense_getParameters(handle_t hLayer, flt32_t** ppParameters, uint3
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerDense_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	DenseNeuralNetHeader* pDenseNeuralNetHeader = (DenseNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pDenseNeuralNetHeader;
+	if (pDenseNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 1;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		if (parameterArraySize >= 1) {
+			pParameterArray[0] = (flt32_t)pDenseNeuralNetHeader->unit;
+		}
+		else {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -346,6 +378,7 @@ NeuralNetLayerDense_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerDense_update;
 	pInterface->pInitializeParameters = NeuralNetLayerDense_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerDense_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerDense_getHyperParameters;
 }
 
 //=====================================================================================

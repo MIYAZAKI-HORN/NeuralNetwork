@@ -618,12 +618,12 @@ NeuralNetLayerConv2D_initializeParameters(handle_t hLayer, handle_t hRandomValue
 	//層パラメタ更新
 	//---------------------------------------------------------------------------------
 	//Filter
-	paramSize = pConv2DNeuralNetHeader->nFilter * pConv2DNeuralNetHeader->kernelHeight * pConv2DNeuralNetHeader->kernelWidth * pConv2DNeuralNetHeader->kernelChannel;
-	normSize = paramSize;
-	set_random_initial_values_by_sqrt(hRandomValueGenerator, pFilter, paramSize, normSize);
+	paramSize	= pConv2DNeuralNetHeader->nFilter * pConv2DNeuralNetHeader->kernelHeight * pConv2DNeuralNetHeader->kernelWidth * pConv2DNeuralNetHeader->kernelChannel;
+	normSize	= pConv2DNeuralNetHeader->kernelHeight * pConv2DNeuralNetHeader->kernelWidth * pConv2DNeuralNetHeader->kernelChannel;
+	set_random_initial_values_by_he(hRandomValueGenerator, pFilter, paramSize, normSize);
 	//Bias
-	paramSize = pConv2DNeuralNetHeader->nFilter;
-	set_random_initial_values(hRandomValueGenerator,pBias, paramSize, 0.0f);
+	paramSize	= pConv2DNeuralNetHeader->nFilter;
+	set_constant_initial_values(pBias, paramSize, 0.0f);
 	return TRUE;
 }
 
@@ -714,6 +714,44 @@ NeuralNetLayerConv2D_getParameters(handle_t hLayer, flt32_t** ppParameters, uint
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerConv2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	Conv2DNeuralNetHeader* pConv2DNeuralNetHeader = (Conv2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pConv2DNeuralNetHeader;
+	if (pConv2DNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		//kernelChannelは自動で決まる
+		*pNumberOfParameters = 6;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		if (parameterArraySize >= 6) {
+			pParameterArray[0] = (flt32_t)pConv2DNeuralNetHeader->nFilter;
+			pParameterArray[1] = (flt32_t)pConv2DNeuralNetHeader->kernelHeight;
+			pParameterArray[2] = (flt32_t)pConv2DNeuralNetHeader->kernelWidth;
+			pParameterArray[3] = (flt32_t)pConv2DNeuralNetHeader->strideHeight;
+			pParameterArray[4] = (flt32_t)pConv2DNeuralNetHeader->strideWidth;
+			pParameterArray[5] = (flt32_t)pConv2DNeuralNetHeader->fPadding;
+		}
+		else {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -774,6 +812,7 @@ NeuralNetLayerConv2D_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerConv2D_update;
 	pInterface->pInitializeParameters = NeuralNetLayerConv2D_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerConv2D_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerConv2D_getHyperParameters;
 }
 
 //=====================================================================================

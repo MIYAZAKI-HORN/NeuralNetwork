@@ -12,6 +12,7 @@ bool_t
 constructLayer(uint32_t* pBuffer, uint32_t bufferSizeIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, LayerInformation* pLayerInformation, uint32_t* pLayerImageSizeIn32BitWord, char* pLayerName) {
 	uint32_t	unit;
 	NeuralNetActivationType activation;
+	flt32_t		negative_slope;
 	bool_t		returnSequence;
 	uint32_t	nFilter;
 	uint32_t	kernelHeight;
@@ -97,7 +98,8 @@ constructLayer(uint32_t* pBuffer, uint32_t bufferSizeIn32BitWord, uint32_t* pInp
 		poolinhWidth	= pLayerInformation->parameterArray[1];
 		strideHeight	= pLayerInformation->parameterArray[2];
 		strideWidth		= pLayerInformation->parameterArray[3];
-		fStatus			= SequentialNet_appendMaxPooling2D(pBuffer, bufferSizeIn32BitWord, pInputHeight, pInputWidth, pInputChannel, poolingHeight, poolinhWidth, strideHeight, strideWidth, pLayerImageSizeIn32BitWord);
+		fPadding		= pLayerInformation->parameterArray[4];
+		fStatus			= SequentialNet_appendMaxPooling2D(pBuffer, bufferSizeIn32BitWord, pInputHeight, pInputWidth, pInputChannel, poolingHeight, poolinhWidth, strideHeight, strideWidth, fPadding, pLayerImageSizeIn32BitWord);
 		break;
 	case NET_LAYER_GLOBAL_AVERAGE_POOLING2D:
 		if (pLayerName != NULL) {
@@ -118,8 +120,7 @@ constructLayer(uint32_t* pBuffer, uint32_t bufferSizeIn32BitWord, uint32_t* pInp
 		fStatus = SequentialNet_appendLayerNormalization(pBuffer, bufferSizeIn32BitWord, pInputHeight, pInputWidth, pInputChannel, pLayerImageSizeIn32BitWord);
 		break;
 	case NET_LAYER_ACTIVATION:
-		activation	= (NeuralNetActivationType)pLayerInformation->parameterArray[0];
-		fStatus		= SequentialNet_appendActivation(pBuffer, bufferSizeIn32BitWord, pInputHeight, pInputWidth, pInputChannel, activation, pLayerImageSizeIn32BitWord);
+		activation		= (NeuralNetActivationType)pLayerInformation->parameterArray[0];
 		if (pLayerName != NULL) {
 			switch (activation) {
 			case NEURAL_NET_ACTIVATION_RELU:
@@ -135,10 +136,24 @@ constructLayer(uint32_t* pBuffer, uint32_t bufferSizeIn32BitWord, uint32_t* pInp
 				strcpy(pLayerName, "activation softmax  ");
 				break;
 			default:
-				strcpy(pLayerName, "activation          ");
+				strcpy(pLayerName, "activation ?        ");
 				break;
 			}
 		}
+		switch (activation) {
+		case NEURAL_NET_ACTIVATION_RELU:
+			// negative slope付きのReLU
+			negative_slope	= pLayerInformation->flt_parameterArray[1];
+			fStatus	= NeuralNetLayerReluActivation_constructLayerData(pBuffer, bufferSizeIn32BitWord, pInputHeight, pInputWidth, pInputChannel, negative_slope, pLayerImageSizeIn32BitWord);
+			break;
+		case NEURAL_NET_ACTIVATION_TANH:
+		case NEURAL_NET_ACTIVATION_SIGMOID:
+		case NEURAL_NET_ACTIVATION_SOFTMAX:
+			fStatus	= SequentialNet_appendActivation(pBuffer, bufferSizeIn32BitWord, pInputHeight, pInputWidth, pInputChannel, activation, pLayerImageSizeIn32BitWord);
+			break;
+		default:
+			break;
+		}		
 		break;
 	case NET_LAYER_PREDECONV2D:
 		if (pLayerName != NULL) {
@@ -219,9 +234,9 @@ constructNeuralNetModelImage(	uint32_t			inHeight,
 	//-----------------------------------------------------
 	//　title
 	//-----------------------------------------------------
-	sprintf(strInformation, "type                 \toutput\tsize\n", height, width, channel);
+	sprintf(strInformation, "type                 \toutput\tsize\n");
 	SAVE_LOG_WITHOUT_RETURN(strInformation);
-	sprintf(strInformation, "--------------------------------------\n", height, width, channel);
+	sprintf(strInformation, "--------------------------------------\n");
 	SAVE_LOG_WITHOUT_RETURN(strInformation);
 	//-----------------------------------------------------
 	//　入力次元
@@ -369,6 +384,24 @@ activation(ModelInformation* pModelInformation, uint32_t activation) {
 	}
 	pModelInformation->layerArray[pModelInformation->numberOfLayers].layerType = NET_LAYER_ACTIVATION;
 	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[0] = activation;
+	//浮動小数点パラメタ
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].flt_parameterArray[1] = 0.0f;	// reluの時のみ利用
+	pModelInformation->numberOfLayers++;
+	return TRUE;
+}
+
+bool_t
+activationReLU(ModelInformation* pModelInformation,flt32_t negative_sloop) {
+	if (pModelInformation->numberOfLayers == MAX_LAYERS) {
+		printf("number of layers exceeded the limit\n");
+		return FALSE;
+	}
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].layerType = NET_LAYER_ACTIVATION;
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[0] = NEURAL_NET_ACTIVATION_RELU;
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[1] = 0;
+	//浮動小数点パラメタ
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].flt_parameterArray[0] = (flt32_t)NET_LAYER_ACTIVATION;
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].flt_parameterArray[1] = negative_sloop;	// reluの時のみ利用
 	pModelInformation->numberOfLayers++;
 	return TRUE;
 }
@@ -437,7 +470,8 @@ max_pooling2d(ModelInformation* pModelInformation,
 	uint32_t	pool_height,
 	uint32_t	pool_width,
 	uint32_t	stride_height,
-	uint32_t	stride_width) {
+	uint32_t	stride_width,
+	bool_t		fPadding) {
 	if (pModelInformation->numberOfLayers == MAX_LAYERS) {
 		printf("number of layers exceeded the limit\n");
 		return FALSE;
@@ -447,6 +481,7 @@ max_pooling2d(ModelInformation* pModelInformation,
 	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[1] = pool_width;
 	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[2] = stride_height;
 	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[3] = stride_width;
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[4] = fPadding;
 	pModelInformation->numberOfLayers++;
 	return TRUE;
 }
@@ -530,7 +565,7 @@ residual_connection_receiver(ModelInformation* pModelInformation) {
 //--------------------------------------------------------------------
 static
 void
-getLayerParameters(char* pLayerInformationText, uint32_t* pParameters, uint32_t* pNumberOfParameters) {
+getLayerParameters(char* pLayerInformationText, uint32_t* pParameters, flt32_t* pfltParameters, uint32_t* pNumberOfParameters) {
 	char* pLast;
 	char* pHead = pLayerInformationText;
 	char* pParam;
@@ -547,7 +582,12 @@ getLayerParameters(char* pLayerInformationText, uint32_t* pParameters, uint32_t*
 		if (*pParam == ',' || *pParam == '\n' || *pParam == '\0') {
 			*pParam = '\0';
 			if (pHead != pParam) {
-				pParameters[*pNumberOfParameters] = atoi(pHead);
+				if (pParameters != NULL) {
+					pParameters[*pNumberOfParameters] = atoi(pHead);
+				}
+				if (pfltParameters != NULL) {
+					pfltParameters[*pNumberOfParameters] = atof(pHead);
+				}
 				(*pNumberOfParameters)++;
 			}
 			pHead = pParam + 1;
@@ -622,96 +662,96 @@ getLayerInformation(char* pLayerInformationText, uint32_t* pInputDim, LayerInfor
 				if (pHead[0] != '/' && pHead[1] != '/') {
 					lineLength = pParam - pHead;
 					if (compareString(pHead, "input\0", &pLayerParameters) == TRUE) {
-						getLayerParameters(pLayerParameters, pInputDim, &numberOfParams);
+						getLayerParameters(pLayerParameters, pInputDim, NULL, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 					}
 					else if (compareString(pHead, "dense\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_DENSE;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "simple_rnn\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_SIMPLE_RNN;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "conv2d\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_CONV2D;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "depthwise_conv2d\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_DEPTHWISE_CONV2D;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "pointwise_conv2d\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_POINTWISE_CONV2D;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "max_pooling2d\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_MAX_POOLING2D;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "global_average_pooling2d\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_GLOBAL_AVERAGE_POOLING2D;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "batch_normalization\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_BATCH_NORMALIZATION;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "layer_normalization\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_LAYER_NORMALIZATION;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "activation\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_ACTIVATION;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "predeconv2d\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_PREDECONV2D;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "residual_connection_sender\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_RESIDUAL_CONNECTION_SENDER;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
 					}
 					else if (compareString(pHead, "residual_connection_receiver\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_RESIDUAL_CONNECTION_RECEIVER;
-						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, &numberOfParams);
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;
 						pLayerInformation++;
@@ -746,6 +786,7 @@ constructNeuralNetModelByFile(const char* pNetworkDefinitionFileName, uint32_t**
 	*ppNeuralNetworkImage = NULL;
 	*pSizeOfNeuralNetworkImageIn32BitWord = 0;
 	memset(inputDimension, 0, sizeof(inputDimension));
+	memset(layerInformationArray, 0, sizeof(layerInformationArray));
 	//-------------------------------------------------
 	//	シーケンシャルモデルファイルオープン
 	//-------------------------------------------------

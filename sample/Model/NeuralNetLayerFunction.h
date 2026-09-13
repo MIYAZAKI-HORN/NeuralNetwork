@@ -12,31 +12,31 @@ extern "C" {
 //  sigmoid
 //=====================================================================================
 void	sigmoid_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim);
-void	sigmoid_backword(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
+void	sigmoid_backward(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
 
 //=====================================================================================
 //  WX+B
 //=====================================================================================
-void	weight_matrix_with_bias_forward(flt32_t* pInputBuffer, uint32_t inputDim, flt32_t* pWeightMatrix, flt32_t* pBias, flt32_t* pOutputBuffer, uint32_t unit, bool_t fInitialize);
+void	weight_matrix_with_bias_forward(flt32_t* pInputBuffer, uint32_t inputDim, flt32_t* pWeightMatrix, flt32_t* pBias, flt32_t* pOutputBuffer, uint32_t unit, bool_t fSuperpose);
 void	weight_matrix_with_bias_backward(flt32_t* pInputBuffer, uint32_t inputDim, flt32_t* pWeightMatrix, flt32_t* pOutputBuffer, uint32_t outputDim, flt32_t* pInputX, flt32_t* pDeltaWeightMatrix, flt32_t* pDeltaBias);
 
 //=====================================================================================
 //  relu
 //=====================================================================================
 void	relu_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim, flt32_t alpha);
-void	relu_backword(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim, flt32_t alpha);
+void	relu_backward(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim, flt32_t alpha);
 
 //=====================================================================================
 //  tanh
 //=====================================================================================
 void	tanh_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim);
-void	tanh_backword(flt32_t* pY,flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
+void	tanh_backward(flt32_t* pY,flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
 
 //=====================================================================================
 //  softmax
 //=====================================================================================
 void	softmax_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim);
-void	softmax_backword(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
+void	softmax_backward(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
 
 //=====================================================================================
 // sqrt
@@ -52,6 +52,12 @@ void	set_random_initial_values(handle_t hRandomValueGenerator, flt32_t* pParamet
 // 初期値設定:normalization by sqrt
 //-------------------------------------------------------------------------
 void	set_random_initial_values_by_sqrt(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, uint32_t normSize);
+
+//-------------------------------------------------------------------------
+//初期値設定:Heの初期化（Kaiming Initialization）
+//ReLU関数やLeakyReLU関数を利用する場合のデファクトスタンダード σ=√(2/parameter size)
+//-------------------------------------------------------------------------
+void	set_random_initial_values_by_he(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, uint32_t normSize);
 
 //-------------------------------------------------------------------------
 // 初期値設定:constant value

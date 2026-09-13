@@ -345,8 +345,8 @@ NeuralNetLayerPointwiseConv2D_initializeParameters(handle_t hLayer, handle_t hRa
 	//---------------------------------------------------------------------------------
 	//フィルタ係数
 	paramSize	= nFilter * inChannel;
-	normSize	= paramSize;
-	set_random_initial_values_by_sqrt(hRandomValueGenerator, pFilter, paramSize, normSize);
+	normSize	= inChannel;
+	set_random_initial_values_by_he(hRandomValueGenerator, pFilter, paramSize, normSize);
 	//バイアス
 	paramSize	= nFilter;
 	set_constant_initial_values(pBias, paramSize, 0.0f);
@@ -438,6 +438,39 @@ NeuralNetLayerPointwiseConv2D_getParameters(handle_t hLayer, flt32_t** ppParamet
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerPointwiseConv2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	PointwiseConv2DNeuralNetHeader* pPointwiseConv2DNeuralNetHeader = (PointwiseConv2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pPointwiseConv2DNeuralNetHeader;
+	if (pPointwiseConv2DNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		//kernelChannelは自動で決まる
+		*pNumberOfParameters = 1;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		if (parameterArraySize >= 1) {
+			pParameterArray[0] = (flt32_t)pPointwiseConv2DNeuralNetHeader->nFilter;
+		}
+		else {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -498,6 +531,7 @@ NeuralNetLayerPointwiseConv2D_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerPointwiseConv2D_update;
 	pInterface->pInitializeParameters = NeuralNetLayerPointwiseConv2D_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerPointwiseConv2D_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerPointwiseConv2D_getHyperParameters;
 }
 
 //=====================================================================================

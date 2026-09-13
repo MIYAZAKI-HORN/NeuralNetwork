@@ -254,6 +254,33 @@ NeuralNetLayerGlobalAveragePooling2D_getParameters(handle_t hLayer, flt32_t** pp
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerGlobalAveragePooling2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	GlobalAveragePooling2DNeuralNetHeader* pGlobalAveragePooling2DNeuralNetHeader = (GlobalAveragePooling2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pGlobalAveragePooling2DNeuralNetHeader;
+	if (pGlobalAveragePooling2DNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 0;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		// don't care
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -295,6 +322,7 @@ NeuralNetLayerGlobalAveragePooling2D_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerGlobalAveragePooling2D_update;
 	pInterface->pInitializeParameters = NeuralNetLayerGlobalAveragePooling2D_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerGlobalAveragePooling2D_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerGlobalAveragePooling2D_getHyperParameters;
 }
 
 //=====================================================================================

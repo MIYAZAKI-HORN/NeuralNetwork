@@ -12,7 +12,7 @@ extern "C" {
 //  sigmoid
 //=====================================================================================
 void	sigmoid_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim);
-void	sigmoid_backward(flt32_t* pX, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
+void	sigmoid_backward(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim);
 
 //=====================================================================================
 //  WX+B
@@ -52,6 +52,12 @@ void	set_random_initial_values(handle_t hRandomValueGenerator, flt32_t* pParamet
 // 初期値設定:normalization by sqrt
 //-------------------------------------------------------------------------
 void	set_random_initial_values_by_sqrt(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, uint32_t normSize);
+
+//-------------------------------------------------------------------------
+//初期値設定:Heの初期化（Kaiming Initialization）
+//ReLU関数やLeakyReLU関数を利用する場合のデファクトスタンダード σ=√(2/parameter size)
+//-------------------------------------------------------------------------
+void	set_random_initial_values_by_he(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, uint32_t normSize);
 
 //-------------------------------------------------------------------------
 // 初期値設定:constant value

@@ -12,6 +12,7 @@ typedef struct tagMaxPooling2DNeuralNetHeader {
 	uint32_t		poolingWidth;	//プーリング幅
 	uint32_t		strideHeight;	//ストライド高
 	uint32_t		strideWidth;	//ストライド幅
+	bool_t			fPadding;		//パディングフラグ
 } MaxPooling2DNeuralNetHeader;
 
 //=====================================================================================
@@ -28,6 +29,7 @@ typedef struct tagMaxPooling2DNeuralNetLayer {
 static
 bool_t
 NeuralNetLayerMaxPooling2D_getShapeInformation(
+	bool_t		fPadding,
 	uint32_t	inHeight,
 	uint32_t	inWidth,
 	uint32_t	inChannel,
@@ -35,8 +37,14 @@ NeuralNetLayerMaxPooling2D_getShapeInformation(
 	uint32_t	poolingWidth,
 	uint32_t	strideHeight,
 	uint32_t	strideWidth,
+	int32_t*	pPaddingHeight,
+	int32_t*	pPaddingWidth,
 	DataShape*	pOutputShape)
 {
+	int32_t		paddingHeight;
+	int32_t		paddingWidth;
+	uint32_t	outHeight;
+	uint32_t	outWidth;
 	//---------------------------------------------------------------------------------
 	//パラメタチェック
 	//---------------------------------------------------------------------------------
@@ -47,11 +55,32 @@ NeuralNetLayerMaxPooling2D_getShapeInformation(
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
+	//Paddingサイズ
+	//---------------------------------------------------------------------------------
+	if (fPadding == TRUE) {
+		//kerasに合わせた出力サイズ：strideでダウンサンプルされる
+		outHeight = (inHeight + strideHeight - 1) / strideHeight;
+		outWidth = (inWidth + strideWidth - 1) / strideWidth;
+		//paddingサイズ
+		paddingHeight = (outHeight - 1) * strideHeight + poolingHeight - inHeight;
+		paddingWidth = (outWidth - 1) * strideWidth + poolingWidth - inWidth;
+	}
+	else {
+		paddingHeight = 0;
+		paddingWidth = 0;
+	}
+	if (pPaddingHeight != NULL) {
+		*pPaddingHeight = paddingHeight;
+	}
+	if (pPaddingWidth != NULL) {
+		*pPaddingWidth = paddingWidth;
+	}
+	//---------------------------------------------------------------------------------
 	//出力データサイズ形状
 	//---------------------------------------------------------------------------------
 	if (pOutputShape != NULL) {
-		pOutputShape->height = 1 + (inHeight - poolingHeight) / strideHeight;
-		pOutputShape->width = 1 + (inWidth - poolingWidth) / strideWidth;
+		pOutputShape->height = 1 + ((inHeight + paddingHeight) - poolingHeight) / strideHeight;
+		pOutputShape->width = 1 + ((inWidth + paddingWidth) - poolingWidth) / strideWidth;
 		pOutputShape->channel = inChannel;
 	}
 	return TRUE;
@@ -71,6 +100,7 @@ NeuralNetLayerMaxPooling2D_getShape(handle_t hLayer, DataShape* pInputShape, Dat
 	//出力データ形状
 	//---------------------------------------------------------------------------------
 	NeuralNetLayerMaxPooling2D_getShapeInformation(
+		pMaxPooling2DNeuralNetHeader->fPadding,
 		pNeuralNetHeader->inHeight,
 		pNeuralNetHeader->inWidth,
 		pNeuralNetHeader->inChannel,
@@ -78,6 +108,8 @@ NeuralNetLayerMaxPooling2D_getShape(handle_t hLayer, DataShape* pInputShape, Dat
 		pMaxPooling2DNeuralNetHeader->poolingWidth,
 		pMaxPooling2DNeuralNetHeader->strideHeight,
 		pMaxPooling2DNeuralNetHeader->strideWidth,
+		NULL,
+		NULL,
 		pOutputShape);
 	//---------------------------------------------------------------------------------
 	//入力データ形状
@@ -99,6 +131,7 @@ NeuralNetLayerMaxPooling2D_forward(handle_t hLayer, PropagationInfo* pPropagatio
 	DataShape	outputShape;
 	uint32_t	outHeight;
 	uint32_t	outWidth;
+	uint32_t	inHeight;
 	uint32_t	inWidth;
 	uint32_t	inChannel;
 	//一時変数
@@ -118,13 +151,19 @@ NeuralNetLayerMaxPooling2D_forward(handle_t hLayer, PropagationInfo* pPropagatio
 	uint32_t	iH;
 	uint32_t	iW;
 	uint32_t	iC;
-	uint32_t	iCornerInHeight;
-	uint32_t	iCornerInWidth;
+	int32_t		iCornerInHeight;
+	int32_t		iCornerInWidth;
 	flt32_t*	pInputBufferCorner;
 	flt32_t*	pInputBufferPoolY;
 	flt32_t*	pInputBufferPool;
 	flt32_t*	pXwithMaxValue;
 	uint32_t	indexOfXwithMaxValue;
+	int32_t		paddingHeight;
+	int32_t		paddingWidth;
+	int32_t		iActualCornerInHeight;
+	int32_t		iActualCornerInWidth;
+	int32_t		actualPoolingHeight;
+	int32_t		actualPoolingWidth;
 	bool_t		fStatus;
 	//---------------------------------------------------------------------------------
 	//エラーハンドリング
@@ -138,6 +177,7 @@ NeuralNetLayerMaxPooling2D_forward(handle_t hLayer, PropagationInfo* pPropagatio
 	//サイズ
 	//---------------------------------------------------------------------------------
 	fStatus = NeuralNetLayerMaxPooling2D_getShapeInformation(
+		pMaxPooling2DNeuralNetHeader->fPadding,
 		pNeuralNetHeader->inHeight,
 		pNeuralNetHeader->inWidth,
 		pNeuralNetHeader->inChannel,
@@ -145,12 +185,15 @@ NeuralNetLayerMaxPooling2D_forward(handle_t hLayer, PropagationInfo* pPropagatio
 		pMaxPooling2DNeuralNetHeader->poolingWidth,
 		pMaxPooling2DNeuralNetHeader->strideHeight,
 		pMaxPooling2DNeuralNetHeader->strideWidth,
+		&paddingHeight,
+		&paddingWidth,
 		&outputShape);
 	outHeight = outputShape.height;
 	outWidth = outputShape.width;
 	//---------------------------------------------------------------------------------
 	//パラメタは一時変数で利用
 	//---------------------------------------------------------------------------------
+	inHeight		= pNeuralNetHeader->inHeight;
 	inWidth			= pNeuralNetHeader->inWidth;
 	inChannel		= pNeuralNetHeader->inChannel;
 	poolingHeight	= pMaxPooling2DNeuralNetHeader->poolingHeight;
@@ -167,21 +210,48 @@ NeuralNetLayerMaxPooling2D_forward(handle_t hLayer, PropagationInfo* pPropagatio
 	pOutput = pOutputBuffer;
 	pMaxValueIndexHead = pMaxPooling2DLayer->pMaxValueIndex;
 	iH = outHeight;
-	iCornerInHeight = 0;
+	iCornerInHeight = -paddingHeight / 2;	//paddingを考慮してシフトする
 	while(iH--) {
 		iW = outWidth;
-		iCornerInWidth = 0;
+		iCornerInWidth = -paddingWidth / 2;	//paddingを考慮してシフトする
 		while(iW--) {
-			pInputBufferCorner = pInputBuffer + (iCornerInHeight * inWidth + iCornerInWidth) * inChannel;
+			//高さ方向のプーリングコーナーとプーリング幅のセット
+			if (iCornerInHeight < 0) {		//入力画像に入っていない
+				iActualCornerInHeight = 0;
+				actualPoolingHeight = poolingHeight + iCornerInHeight;	// iCornerInHeightはこの時負
+			}
+			else if ((iCornerInHeight + poolingHeight) > inHeight) {	// 入録画像を超えた
+				iActualCornerInHeight = iCornerInHeight;
+				actualPoolingHeight = inHeight - iCornerInHeight;
+			}
+			else {	//入力画像の中
+				iActualCornerInHeight = iCornerInHeight;
+				actualPoolingHeight = poolingHeight;
+			}
+			//幅方向のプーリングコーナーとプーリング幅のセット
+			if (iCornerInWidth < 0) {		// 入力画像に入っていない
+				iActualCornerInWidth = 0;
+				actualPoolingWidth = poolingWidth + iCornerInWidth;	// iCornerInWidthはこの時負
+			}
+			else if ((iCornerInWidth + poolingWidth) > inWidth) {	//  入録画像を超えた
+				iActualCornerInWidth = iCornerInWidth;
+				actualPoolingWidth = inWidth - iCornerInWidth;
+			}
+			else {	//入力画像の中
+				iActualCornerInWidth = iCornerInWidth;
+				actualPoolingWidth = poolingWidth;
+			}
+			//入力データバッファのプーリング位置
+			pInputBufferCorner = pInputBuffer + (iActualCornerInHeight * inWidth + iActualCornerInWidth) * inChannel;
 			iC = inChannel;
 			while(iC--) {
 				maxValue = *pInputBufferCorner;
 				pInputBufferPoolY = pInputBufferCorner;
 				pXwithMaxValue = pInputBufferPoolY;	//最大値を保持するXのポインタ
-				i = poolingHeight;
+				i = actualPoolingHeight;	// パディングを考慮したプーリング高さ
 				while (i--) {
 					pInputBufferPool = pInputBufferPoolY;
-					j = poolingWidth;
+					j = actualPoolingWidth;	// パディングを考慮したプーリング幅
 					while (j--) {
 						pixelValue = *pInputBufferPool;
 						if (maxValue < pixelValue) {
@@ -227,11 +297,7 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 	uint32_t	inHeight;
 	uint32_t	inWidth;
 	uint32_t	inChannel;
-	uint32_t	poolingHeight;
-	uint32_t	poolingWidth;
 	//一時変数
-	uint32_t	strideHeight;
-	uint32_t	strideWidth;
 	flt32_t*	pInputBuffer;
 	flt32_t*	pOutputBuffer;
 	uint32_t*	pTemporaryBuffer;
@@ -239,8 +305,6 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 	uint32_t	iH;
 	uint32_t	iW;
 	uint32_t	iChan;
-	uint32_t	iCornerInHeight;
-	uint32_t	iCornerInWidth;
 	bool_t		fStatus;
 	flt32_t*	pDLossArray;
 	uint32_t	indexOfXwithMaxValue;
@@ -256,6 +320,7 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 	//サイズ
 	//---------------------------------------------------------------------------------
 	fStatus = NeuralNetLayerMaxPooling2D_getShapeInformation(
+		pMaxPooling2DNeuralNetHeader->fPadding,
 		pNeuralNetHeader->inHeight,
 		pNeuralNetHeader->inWidth,
 		pNeuralNetHeader->inChannel,
@@ -263,6 +328,8 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 		pMaxPooling2DNeuralNetHeader->poolingWidth,
 		pMaxPooling2DNeuralNetHeader->strideHeight,
 		pMaxPooling2DNeuralNetHeader->strideWidth,
+		NULL,
+		NULL,
 		&outputShape);
 	if (fStatus == FALSE) {
 		return FALSE;
@@ -275,10 +342,6 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 	inHeight		= pNeuralNetHeader->inHeight;
 	inWidth			= pNeuralNetHeader->inWidth;
 	inChannel		= pNeuralNetHeader->inChannel;
-	poolingHeight	= pMaxPooling2DNeuralNetHeader->poolingHeight;
-	poolingWidth	= pMaxPooling2DNeuralNetHeader->poolingWidth;
-	strideHeight	= pMaxPooling2DNeuralNetHeader->strideHeight;
-	strideWidth		= pMaxPooling2DNeuralNetHeader->strideWidth;
 	pInputBuffer	= pPropagationInfo->pInputBuffer;		//入力バッファ
 	pOutputBuffer	= pPropagationInfo->pOutputBuffer;		//出力バッファ
 	pTemporaryBuffer = pPropagationInfo->pTemporaryBuffer;	//一時計算バッファ
@@ -297,14 +360,12 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 	pDLossArray = pOutputBuffer;
 	outDataCounter = 0;
 	iH = outHeight;
-	iCornerInHeight = 0;
 	while (iH--) {
 		iW = outWidth;
-		iCornerInWidth = 0;
 		for (iW = 0; iW < outWidth; iW++) {
 			for (iChan = 0; iChan < inChannel; iChan++) {
 				//------------------------------------------------------------------------------------------
-				//最大値を保持するのXに対して誤差を伝搬
+				//最大値を保持するXに対して誤差を伝搬
 				//------------------------------------------------------------------------------------------
 				//最大値のインデックス
 				indexOfXwithMaxValue = pMaxPooling2DLayer->pMaxValueIndex[outDataCounter];
@@ -314,9 +375,7 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 				pDLossArray++;
 				outDataCounter++;
 			}
-			iCornerInWidth += strideWidth;
 		}
-		iCornerInHeight += strideHeight;
 	}
 	//---------------------------------------------------------------------------------
 	//逆伝搬出力データサイズ形状(順伝搬の入力データ形状)
@@ -384,6 +443,7 @@ NeuralNetLayerMaxPooling2D_getLayerInformation(
 	//出力形状
 	//---------------------------------------------------------------------------------
 	NeuralNetLayerMaxPooling2D_getShapeInformation(
+		pMaxPooling2DNeuralNetHeader->fPadding,
 		pNeuralNetHeader->inHeight,
 		pNeuralNetHeader->inWidth,
 		pNeuralNetHeader->inChannel,
@@ -391,6 +451,8 @@ NeuralNetLayerMaxPooling2D_getLayerInformation(
 		pMaxPooling2DNeuralNetHeader->poolingWidth,
 		pMaxPooling2DNeuralNetHeader->strideHeight,
 		pMaxPooling2DNeuralNetHeader->strideWidth,
+		NULL,
+		NULL,
 		pOutputShape);
 	//---------------------------------------------------------------------------------
 	//入力形状
@@ -412,6 +474,42 @@ NeuralNetLayerMaxPooling2D_getParameters(handle_t hLayer, flt32_t** ppParameters
 	}
 	if (pNumberOfParameters != NULL) {
 		*pNumberOfParameters = 0;
+	}
+	return TRUE;
+}
+
+//=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerMaxPooling2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	MaxPooling2DNeuralNetHeader* pMaxPooling2DNeuralNetHeader = (MaxPooling2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pMaxPooling2DNeuralNetHeader;
+	if (pMaxPooling2DNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 5;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		if (parameterArraySize >= 5) {
+			pParameterArray[0] = (flt32_t)pMaxPooling2DNeuralNetHeader->poolingHeight;
+			pParameterArray[1] = (flt32_t)pMaxPooling2DNeuralNetHeader->poolingWidth;
+			pParameterArray[2] = (flt32_t)pMaxPooling2DNeuralNetHeader->strideHeight;
+			pParameterArray[3] = (flt32_t)pMaxPooling2DNeuralNetHeader->strideWidth;
+			pParameterArray[4] = (flt32_t)pMaxPooling2DNeuralNetHeader->fPadding;
+		}
+		else {
+			return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -466,6 +564,7 @@ NeuralNetLayerMaxPooling2D_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerMaxPooling2D_update;
 	pInterface->pInitializeParameters = NeuralNetLayerMaxPooling2D_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerMaxPooling2D_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerMaxPooling2D_getHyperParameters;
 }
 
 //=====================================================================================
@@ -482,16 +581,18 @@ NeuralNetLayerMaxPooling2D_constructLayerData(
 	uint32_t	poolingWidth,
 	uint32_t	strideHeight,
 	uint32_t	strideWidth,
+	bool_t		fPadding,
 	uint32_t*	pSizeOfLayerIn32BitWord)
 {
 	uint32_t	sizeHeader;
 	uint32_t	sizeLayer;
 	uint32_t*	pLayer;
-	uint32_t	outHeight;
-	uint32_t	outWidth;
 	uint32_t	inHeight;
 	uint32_t	inWidth;
 	uint32_t	inChannel;
+	int32_t		paddingHeight;
+	int32_t		paddingWidth;
+	DataShape	outputShape;
 	MaxPooling2DNeuralNetHeader* pMaxPooling2DNeuralNetHeader;
 	//---------------------------------------------------------------------------------
 	//パラメタチェック
@@ -545,15 +646,29 @@ NeuralNetLayerMaxPooling2D_constructLayerData(
 		pMaxPooling2DNeuralNetHeader->poolingWidth = poolingWidth;
 		pMaxPooling2DNeuralNetHeader->strideHeight = strideHeight;
 		pMaxPooling2DNeuralNetHeader->strideWidth = strideWidth;
+		pMaxPooling2DNeuralNetHeader->fPadding = fPadding;
 		pLayer += sizeHeader;
 	}
 	//---------------------------------------------------------------------------------
+	//Paddingサイズ
+	//---------------------------------------------------------------------------------
+	NeuralNetLayerMaxPooling2D_getShapeInformation(
+		fPadding,
+		inHeight,
+		inWidth,
+		inChannel,
+		poolingHeight,
+		poolingWidth,
+		strideHeight,
+		strideWidth,
+		&paddingHeight,
+		&paddingWidth,
+		&outputShape);
+	//---------------------------------------------------------------------------------
 	//出力次元
 	//---------------------------------------------------------------------------------
-	outHeight		= 1 + (inHeight - poolingHeight) / strideHeight;
-	outWidth		= 1 + (inWidth - poolingWidth) / strideWidth;
-	*pInputHeight	= outHeight;
-	*pInputWidth	= outWidth;
-	*pInputChannel	= inChannel;
+	*pInputHeight = outputShape.height;
+	*pInputWidth = outputShape.width;
+	*pInputChannel = outputShape.channel;
 	return TRUE;
 }

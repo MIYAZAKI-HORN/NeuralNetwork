@@ -29,6 +29,7 @@ NeuralNetLayerMaxPooling2D_constructLayerData(
 	uint32_t	poolingWidth,
 	uint32_t	strideHeight,
 	uint32_t	strideWidth,
+	bool_t		fPadding,
 	uint32_t*	pSizeOfLayerIn32BitWord);
 
 #ifdef __cplusplus

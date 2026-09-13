@@ -58,7 +58,7 @@ typedef struct tagModelInformationEx {
 //-----------------------------------------------------------------------------------------------------
 //データファイル定義
 //-----------------------------------------------------------------------------------------------------
-#define DATA_FOLDER (".\\Data\\")
+#define DATA_FOLDER ("..\\Data\\")
 
 #define TRAIN_IMAGE_DATA_FILE_NAME		("boston\\boston_train.csv")
 #define TEST_IMAGE_DATA_FILE_NAME		("boston\\boston_test.csv")
@@ -209,6 +209,7 @@ int main(int argc, char* argv[])
 	//================================================================
 	//モデル情報のセット
 	//================================================================
+	memset(&extModelInfo, 0, sizeof(extModelInfo));
 	setModelInformation(&extModelInfo);
 	//================================================================
 	//入力次元
@@ -320,7 +321,7 @@ int main(int argc, char* argv[])
 			case NEURAL_NET_OPTIMIZER_UNDEFINED:
 				break;
 			case NEURAL_NET_OPTIMIZER_SGD:
-				NeuralNetworkOptimizerSGD_setParameters(hOptimizer,0.9f, 0.01f);
+				NeuralNetworkOptimizerSGD_setParameters(hOptimizer,0.9f, 0.01f, 0.0005f);
 				break;
 			case NEURAL_NET_OPTIMIZER_RMSPROP:
 				NeuralNetworkOptimizerRMSprop_setParameters(hOptimizer,0.9f,0.001f);

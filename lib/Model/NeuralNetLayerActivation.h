@@ -37,7 +37,7 @@ void	NeuralNetLayerActivation_getInterface(LayerFuncTable* pInterface, uint32_t*
 //  ActivationëwçÏê¨
 //=====================================================================================
 //relu
-bool_t	NeuralNetLayerReluActivation_constructLayerData(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t* pSizeOfLayerIn32BitWord);
+bool_t	NeuralNetLayerReluActivation_constructLayerData(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, flt32_t negative_slope, uint32_t* pSizeOfLayerIn32BitWord);
 //tanh
 bool_t	NeuralNetLayerTanhActivation_constructLayerData(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t* pSizeOfLayerIn32BitWord);
 //sigmoid

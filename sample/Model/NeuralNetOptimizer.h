@@ -46,7 +46,7 @@ bool_t	NeuralNetOptimizer_getInterface(handle_t hOptimizer, OptimizerFunctionTab
 //-------------------------------------------------------------------------
 //  SGDパラメタセット
 //-------------------------------------------------------------------------
-bool_t	NeuralNetworkOptimizerSGD_setParameters(handle_t hOptimizer, flt32_t momeNeuralNetOptimizer_getInterfaceByHandlentum, flt32_t learningRate);
+bool_t	NeuralNetworkOptimizerSGD_setParameters(handle_t hOptimizer, flt32_t momentum, flt32_t learningRate, flt32_t decay);
 
 //=====================================================================================
 //  RMSpropパラメタセット

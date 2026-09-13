@@ -22,6 +22,7 @@ typedef struct tagNeuralNetworkOptimizerSGD {
 	flt32_t*			pV;
 	flt32_t				momentum;
 	flt32_t				lr;
+	flt32_t				decay;
 } NeuralNetworkOptimizerSGD;
 
 //=====================================================================================
@@ -168,6 +169,7 @@ NeuralNetworkOptimizerSGD_construct(uint32_t parameterSize, uint32_t batchSize, 
 	pSGD->pV		= (flt32_t*)pWorkArea;
 	pSGD->momentum	= 0.9f;
 	pSGD->lr		= 0.01f;
+	pSGD->decay		= 0.0005f;
 	//----------------------------------------------------------------------------------
 	//インターフェイス設定
 	//----------------------------------------------------------------------------------
@@ -230,6 +232,11 @@ NeuralNetworkOptimizerSGD_update(handle_t hOptimizer,flt32_t* pParameterToUpdate
 		averageDParam = *pDP++;
 		averageDParam *= factor;
 		//---------------------------------------------------------------------------------
+		// Weight Decay / L2正規化
+		// 重み減衰を入れることでパラメータの肥大化を防ぎ、過学習を抑制する。
+		//---------------------------------------------------------------------------------
+		averageDParam += (*pParameter) * pSGD->decay;
+		//---------------------------------------------------------------------------------
 		// V計算
 		//---------------------------------------------------------------------------------
 		*pV = (*pV) * pSGD->momentum - averageDParam * pSGD->lr;
@@ -279,15 +286,16 @@ NeuralNetworkOptimizerSGC_getInterface(OptimizerFunctionTable* pInterface) {
 //  パラメタセット
 //=====================================================================================
 bool_t
-NeuralNetworkOptimizerSGD_setParameters(handle_t hOptimizer, flt32_t momentum, flt32_t lr) {
+NeuralNetworkOptimizerSGD_setParameters(handle_t hOptimizer, flt32_t momentum, flt32_t lr, flt32_t decay) {
 	NeuralNetOptimizer* This = (NeuralNetOptimizer*)hOptimizer;
 	NeuralNetworkOptimizerSGD* pSGD = (NeuralNetworkOptimizerSGD*)hOptimizer;
 	if (pSGD == NULL) {
 		return FALSE;
 	}
 	if (This->type == NEURAL_NET_OPTIMIZER_SGD) {
-		pSGD->momentum = momentum;
-		pSGD->lr = lr;
+		pSGD->momentum	= momentum;
+		pSGD->lr		= lr;
+		pSGD->decay		= decay;
 	}
 	else {
 		return FALSE;

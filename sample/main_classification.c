@@ -60,19 +60,19 @@ typedef struct tagModelInformationEx {
 //-----------------------------------------------------------------------------------------------------
 //学習関連パラメタ
 //-----------------------------------------------------------------------------------------------------
-#define EPOCHS							(100)
+#define EPOCHS							(20)
 #define BATCH_SIZE						(100)
 #define BATCH_NORMALIZATION_MOMENTUM	(0.999f)
 
 //-----------------------------------------------------------------------------------------------------
 //Leaky ReLU活性化関数の負値勾配
 //-----------------------------------------------------------------------------------------------------
-#define RELU_ACTIVATION_NEGATIVE_SLOOP	(0.0f)
+#define RELU_ACTIVATION_NEGATIVE_SLOOP	(0.01f)
 
 //-----------------------------------------------------------------------------------------------------
 //データファイル定義
 //-----------------------------------------------------------------------------------------------------
-#define DATA_FOLDER (".\\Data\\")
+#define DATA_FOLDER ("..\\Data\\")
 
 #define TRAIN_IMAGE_DATA_FILE_NAME		("MNIST\\MNIST_trainHalf.csv")
 #define TEST_IMAGE_DATA_FILE_NAME		("MNIST\\MNIST_test.csv")
@@ -174,7 +174,7 @@ setModelInformation(EvaluationModelType modelType, ModelInformationEx* pNetworkI
 		sequential_model_header(pModel, 28, 28, 1);	//入力　28x28x1　Channel last
 		conv2d(pModel, 10, 3, 3, 1, 1, FALSE);
 		activation(pModel, NEURAL_NET_ACTIVATION_RELU);
-		max_pooling2d(pModel, 3, 3, 3, 3);
+		max_pooling2d(pModel, 3, 3, 3, 3, FALSE);
 		conv2d(pModel, 4, 3, 3, 1, 1, TRUE);
 		activation(pModel, NEURAL_NET_ACTIVATION_RELU);
 		conv2d(pModel, 4, 3, 3, 1, 1, TRUE);
@@ -257,6 +257,7 @@ int main(int argc, char* argv[])
 	//================================================================
 	//evaluationModelType = EVALUATION_MODEL_TYPE_DENSE;
 	evaluationModelType = EVALUATION_MODEL_TYPE_CONV2D;
+	memset(&extModelInfo, 0, sizeof(extModelInfo));
 	setModelInformation(evaluationModelType,&extModelInfo);
 	//================================================================
 	//入力次元
@@ -368,7 +369,7 @@ int main(int argc, char* argv[])
 			case NEURAL_NET_OPTIMIZER_UNDEFINED:
 				break;
 			case NEURAL_NET_OPTIMIZER_SGD:
-				NeuralNetworkOptimizerSGD_setParameters(hOptimizer,0.9f, 0.01f);
+				NeuralNetworkOptimizerSGD_setParameters(hOptimizer,0.9f, 0.01f, 0.0005f);
 				break;
 			case NEURAL_NET_OPTIMIZER_RMSPROP:
 				NeuralNetworkOptimizerRMSprop_setParameters(hOptimizer,0.9f,0.001f);

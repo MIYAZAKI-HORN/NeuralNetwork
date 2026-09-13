@@ -82,6 +82,7 @@ typedef bool_t(*NetLayer_backward)				(handle_t hLayer, PropagationInfo* pPropag
 typedef bool_t(*NetLayer_update)				(handle_t hLayer);
 typedef bool_t(*NetLayer_initializeParameters)	(handle_t hLayer, handle_t hRandomValueGenerator);
 typedef bool_t(*NetLayer_getParameters)			(handle_t hLayer, flt32_t** ppParameters, uint32_t* pNumberOfParameters);
+typedef bool_t(*NetLayer_getHyperParameters)	(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters,uint32_t parameterArraySize);
 
 typedef struct tagLayerFuncTable {
 	NetLayer_getLayerInformation	pGetLayerInformation;
@@ -92,6 +93,7 @@ typedef struct tagLayerFuncTable {
 	NetLayer_update					pUpdate;
 	NetLayer_initializeParameters	pInitializeParameters;
 	NetLayer_getParameters			pGetParameters;
+	NetLayer_getHyperParameters		pGetHyperParameters;
 } LayerFuncTable;
 
 #endif

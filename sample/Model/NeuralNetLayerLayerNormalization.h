@@ -19,7 +19,12 @@ NeuralNetLayerLayerNormalization_getInterface(LayerFuncTable* pInterface);
 //  LayerNormalizationëwçÏê¨
 //=====================================================================================
 bool_t
-NeuralNetLayerLayerNormalization_constructLayerData(uint32_t* pBuffer,uint32_t sizeOfBufferIn32BitWord,uint32_t* pInputHeight,uint32_t* pInputWidth,uint32_t* pInputChannel,uint32_t* pSizeOfLayerIn32BitWord);
+NeuralNetLayerLayerNormalization_constructLayerData(	uint32_t* pBuffer,
+														uint32_t sizeOfBufferIn32BitWord,
+														uint32_t* pInputHeight,
+														uint32_t* pInputWidth,
+														uint32_t* pInputChannel,
+														uint32_t* pSizeOfLayerIn32BitWord);
 
 #ifdef __cplusplus
 }

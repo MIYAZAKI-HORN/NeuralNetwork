@@ -29,7 +29,6 @@ typedef struct tagSequentialNetHeader {
 	uint32_t	numberOfLayers;
 } SequentialNetHeader;
 
-
 //=====================================================================================
 // 各層のインターフェイスを取得する
 //=====================================================================================
@@ -106,6 +105,7 @@ typedef struct tagSequentialNet {
 	uint32_t	backPropagationCounter;
 	uint32_t	backPropagationEndLayerIndex;
 	handle_t	hRandomValueGenerator;
+	SequentialNet_ExternalFuncTable*	pExternalFuncTable;
 } SequentialNet;
 
 //=====================================================================================
@@ -605,6 +605,10 @@ SequentialNet_construct(uint32_t* pModelData,bool_t fEnableLearning,uint32_t bat
 	This->pInputBuffer	= NULL;
 	This->pOutputBuffer	= NULL;
 	//---------------------------------------------------------------------------------
+	//外部関数呼び出しインターフェース
+	//---------------------------------------------------------------------------------
+	This->pExternalFuncTable = NULL;
+	//---------------------------------------------------------------------------------
 	//チェック
 	//---------------------------------------------------------------------------------
 	if( (uint32_t)(pWorkAreaHead - pWorkArea) > sizeOfWorkAreaIn32BitWord ) {
@@ -619,14 +623,17 @@ SequentialNet_construct(uint32_t* pModelData,bool_t fEnableLearning,uint32_t bat
 bool_t
 SequentialNet_predict(handle_t hModel,flt32_t* pInputData,uint32_t inputDataArraySize) {
 	uint32_t				i;
+	uint32_t				iLayer;
 	SequentialNet*			This = (SequentialNet*)hModel;
 	SequentialNetHeader*	pHeader;
 	uint32_t				inputDim;
 	uint32_t				outputDim;
 	PropagationInfo			propagationInfo;
-	flt32_t*				pLayerParam;
+	flt32_t*				pLayerInput;
+	uint32_t				layerInputDim;
 	bool_t					fStatus;
 	uint32_t				layerOrder;
+	bool_t					fDoLayerForward;
 	//---------------------------------------------------------------------------------
 	//モデルハンドルをチェック
 	//---------------------------------------------------------------------------------
@@ -681,32 +688,55 @@ SequentialNet_predict(handle_t hModel,flt32_t* pInputData,uint32_t inputDataArra
 	//---------------------------------------------------------------------------------
 	// 各層をシーケンシャルに計算
 	//---------------------------------------------------------------------------------
-	for( i=0; i<This->numberOfLayers; i++ ) {
+	for(iLayer =0; iLayer <This->numberOfLayers; iLayer++ ) {
 		//---------------------------------------------------------------------------------
 		//バッファ設定
 		//---------------------------------------------------------------------------------
 		propagationInfo.pInputBuffer = This->pInputBuffer;
 		propagationInfo.pOutputBuffer = This->pOutputBuffer;
 		//---------------------------------------------------------------------------------
-		//順伝搬
+		//順伝搬設定
 		//---------------------------------------------------------------------------------
-		fStatus = NeuralNetLayer_forward(This->pLayerArray[i], &propagationInfo);
-		if (fStatus == FALSE) {
-			return FALSE;
+		//default:順伝搬を実施する必要がある
+		fDoLayerForward = TRUE;
+		//外部関数が定義されている場合はこれに従う
+		if (This->pExternalFuncTable != NULL && This->pExternalFuncTable->pForwardControler != NULL) {
+			//---------------------------------------------------------------------------------
+			//順伝搬制御関数（中間層データ入出力制御）
+			//---------------------------------------------------------------------------------
+			if ( This->pExternalFuncTable->pForwardControler != NULL ) {
+				//逆伝播層入力データを外部に引き渡す/引き戻すなどに利用する
+				pLayerInput = propagationInfo.pInputBuffer;
+				layerInputDim = DataShape_getSize(&propagationInfo.dataShape);
+				//順伝搬を実施する場合はTRUEを返す
+				fDoLayerForward = This->pExternalFuncTable->pForwardControler(This->pExternalFuncTable->pUserData, iLayer, pLayerInput, layerInputDim);
+			}
+		}
+		//条件に合致している場合に順伝搬を実施する
+		if (fDoLayerForward == TRUE) {
+			//順伝搬
+			fStatus = NeuralNetLayer_forward(This->pLayerArray[iLayer], &propagationInfo);
+			if (fStatus == FALSE) {
+				return FALSE;
+			}
+		}
+		else {
+			//出力形状（次の層の入力）だけ更新
+			fStatus = NeuralNetLayer_getShape(This->pLayerArray[iLayer], NULL, &propagationInfo.dataShape);
 		}
 		//---------------------------------------------------------------------------------
 		//層計算順序取得:シーケンシャルなので順番通りであることを確認
 		//---------------------------------------------------------------------------------
-		fStatus = NeuralNetLayer_getOrder(This->pLayerArray[i],&layerOrder);
+		fStatus = NeuralNetLayer_getOrder(This->pLayerArray[iLayer],&layerOrder);
 		if (fStatus == FALSE) {
 			return FALSE;
 		}
 		//---------------------------------------------------------------------------------
 		//入出力バッファの入れ替え
 		//---------------------------------------------------------------------------------
-		pLayerParam = This->pInputBuffer;
+		pLayerInput = This->pInputBuffer;
 		This->pInputBuffer	= This->pOutputBuffer;
-		This->pOutputBuffer	= pLayerParam;
+		This->pOutputBuffer	= pLayerInput;
 	}
 	//---------------------------------------------------------------------------------
 	//出力バッファー設定
@@ -834,7 +864,7 @@ SequentialNet_getLayerType(handle_t hModel,uint32_t layerIndex, NetLayerType* pN
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//層際プを取得
+	//層タイプを取得
 	//---------------------------------------------------------------------------------
 	return NeuralNetLayer_getType(This->pLayerArray[layerIndex], pNetLayerType);
 }
@@ -883,11 +913,11 @@ SequentialNet_initializeParameter(handle_t hModel) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//パラメタ初期化
+	//パラメタ初期化：対象の層のみ初期化する
 	//---------------------------------------------------------------------------------
-	for (i = 0; i < This->numberOfLayers; i++) {
+	for (i = This->backPropagationEndLayerIndex; i < This->numberOfLayers; i++) {
 		//---------------------------------------------------------------------------------
-		//
+		//層パラメタ初期化
 		//---------------------------------------------------------------------------------
 		fStatus = NeuralNetLayer_initializeParameters(This->pLayerArray[i], This->hRandomValueGenerator);
 		if (fStatus == FALSE) {
@@ -1123,6 +1153,82 @@ SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
 }
 
 //=====================================================================================
+//  誤差逆伝搬の際の最終層（第一層）からの微分損失値を取得（複数のエンジンを連結する際に利用）
+//=====================================================================================
+bool_t
+SequentialNet_getFinalDeltaLoss(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
+	uint32_t		i;
+	SequentialNet*	This = (SequentialNet*)hModel;
+	uint32_t		inputDim;
+	//---------------------------------------------------------------------------------
+	//モデルハンドルをチェック
+	//---------------------------------------------------------------------------------
+	if (This == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//学習モードで無ければエラー
+	//---------------------------------------------------------------------------------
+	if (This->fEnableLearning == FALSE) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//入出力データ次元
+	//---------------------------------------------------------------------------------
+	inputDim = DataShape_getSize(&This->inputShape);
+	//---------------------------------------------------------------------------------
+	//パラメータチェック
+	//---------------------------------------------------------------------------------
+	if (pLoss == NULL) {
+		return FALSE;
+	}
+	if (inputDim != arraySize) {
+		return FALSE;
+	}
+	if (This->numberOfLayers == 0) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//バすべての層で逆伝搬していない場合はエラー
+	//---------------------------------------------------------------------------------
+	if (This->backPropagationEndLayerIndex != 0) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//出力バッファーおよび出力パラメタをチェック
+	//---------------------------------------------------------------------------------
+	if (This->pOutputBuffer == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//出力値（最終逆伝搬値）をセット
+	//---------------------------------------------------------------------------------
+	for (i = 0; i < inputDim; i++) {
+		pLoss[i] = This->pOutputBuffer[i];
+	}
+	return TRUE;
+}
+
+//=====================================================================================
+//  外部予備橋関数のセット
+//=====================================================================================
+bool_t		
+SequentialNet_setExternalFunctions(handle_t hModel, SequentialNet_ExternalFuncTable* pExternalFuncTable) {
+	SequentialNet* This = (SequentialNet*)hModel;
+	//---------------------------------------------------------------------------------
+	//モデルハンドルをチェック
+	//---------------------------------------------------------------------------------
+	if (This == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//外部関数テーブルポインタをセットする
+	//---------------------------------------------------------------------------------
+	This->pExternalFuncTable = pExternalFuncTable;
+	return TRUE;
+}
+
+//=====================================================================================
 //  モデルヘッダ作成
 //=====================================================================================
 bool_t
@@ -1214,8 +1320,8 @@ SequentialNet_appendPointwiseConv2D(uint32_t* pBuffer, uint32_t sizeOfBufferIn32
 //  MaxPooling2D層作成
 //=====================================================================================
 bool_t
-SequentialNet_appendMaxPooling2D(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t poolinghHeight, uint32_t poolingWidth, uint32_t strideHeight, uint32_t strideWidth, uint32_t* pSizeOfLayerIn32BitWord) {
-	return NeuralNetLayerMaxPooling2D_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, poolinghHeight, poolingWidth, strideHeight, strideWidth, pSizeOfLayerIn32BitWord);
+SequentialNet_appendMaxPooling2D(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t poolinghHeight, uint32_t poolingWidth, uint32_t strideHeight, uint32_t strideWidth, bool_t fPadding, uint32_t* pSizeOfLayerIn32BitWord) {
+	return NeuralNetLayerMaxPooling2D_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, poolinghHeight, poolingWidth, strideHeight, strideWidth, fPadding, pSizeOfLayerIn32BitWord);
 }
 
 //=====================================================================================
@@ -1251,6 +1357,14 @@ SequentialNet_appendActivation(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWo
 }
 
 //=====================================================================================
+//  Activation ReLU層作成
+//=====================================================================================
+bool_t
+SequentialNet_appendReLU(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, flt32_t negative_slope, uint32_t* pSizeOfLayerIn32BitWord) {
+	return NeuralNetLayerReluActivation_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, negative_slope, pSizeOfLayerIn32BitWord);
+}
+
+//=====================================================================================
 //  PreDeconv2D層作成
 //=====================================================================================
 bool_t
@@ -1274,3 +1388,244 @@ SequentialNet_appendResidualConnectionReceiver(uint32_t* pBuffer, uint32_t sizeO
 	return 	NeuralNetLayerResidualConnectionReceiver_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, pSizeOfLayerIn32BitWord);
 }
 
+//=====================================================================================
+//  モデルの先頭から指定された層分のモデルを抽出する
+//=====================================================================================
+bool_t
+SequentialNet_extractModel(uint32_t* pModelData,uint32_t numOfLyers,uint32_t* pExtractedModelData,uint32_t* pSizeOfModelIn32BitWord, uint32_t* pOutputHeight, uint32_t* pOutputWidth, uint32_t* pOutputChannel) {
+	uint32_t				i;
+	uint32_t				sizeOfModelIn32BitWord;
+	SequentialNetHeader*	pHeader;
+	NeuralNetHeader*		pNeuralNetHeader;
+	LayerFuncTable			netLayerFuncTable;
+	uint32_t*				pLayerData;
+	DataShape				inputShape;
+	DataShape				outputShape;
+	bool_t					fStatus;
+	//----------------------------------------------------------------------------------
+	//モデルデータチェック
+	//----------------------------------------------------------------------------------
+	if (pModelData == NULL) {
+		return FALSE;
+	}
+	//----------------------------------------------------------------------------------
+	//ヘッダーのセット
+	//----------------------------------------------------------------------------------
+	pHeader = (SequentialNetHeader*)pModelData;
+	//----------------------------------------------------------------------------------
+	//指定層数のチェック
+	//----------------------------------------------------------------------------------
+	if (numOfLyers > pHeader->numberOfLayers) {
+		return FALSE;
+	}
+	//----------------------------------------------------------------------------------
+	//ヘッダーサイズ
+	//----------------------------------------------------------------------------------
+	sizeOfModelIn32BitWord = size_in_type(sizeof(SequentialNetHeader), uint32_t);
+	//----------------------------------------------------------------------------------
+	//最初の層に移動
+	//----------------------------------------------------------------------------------
+	pLayerData = pModelData + size_in_type(sizeof(SequentialNetHeader), uint32_t);
+	for (i = 0; i < numOfLyers; i++) {
+		//---------------------------------------------------------------------------------
+		//層ヘッダー
+		//---------------------------------------------------------------------------------
+		pNeuralNetHeader = (NeuralNetHeader*)pLayerData;
+		//----------------------------------------------------------------------------------
+		//層構築関連関数インターフェース取得
+		//----------------------------------------------------------------------------------
+		NetLayer_getInterface(pNeuralNetHeader, &netLayerFuncTable);
+		//----------------------------------------------------------------------------------
+		//層情報
+		//----------------------------------------------------------------------------------
+		fStatus = netLayerFuncTable.pGetLayerInformation(
+			pLayerData,		//in:image data
+			FALSE,			//in:back propagation flag
+			NULL,			//out:layer object size
+			NULL,			//out:number of learning prameters for optimizer
+			NULL,			//out:temporary work area size for prediction and back propagation
+			&inputShape,	//out:input data shape
+			&outputShape	//out:output data shape
+		);
+		if (fStatus == FALSE) {
+			return FALSE;
+		}
+		//---------------------------------------------------------------------------------
+		//層データサイズを加算
+		//---------------------------------------------------------------------------------
+		sizeOfModelIn32BitWord += pNeuralNetHeader->sizeIn32BitWord;
+		//---------------------------------------------------------------------------------
+		//次の層情報に移動
+		//---------------------------------------------------------------------------------
+		pLayerData += pNeuralNetHeader->sizeIn32BitWord;
+	}
+	//---------------------------------------------------------------------------------
+	//サイズをセット
+	//---------------------------------------------------------------------------------
+	if (pSizeOfModelIn32BitWord != NULL) {
+		*pSizeOfModelIn32BitWord = sizeOfModelIn32BitWord;
+	}
+	//---------------------------------------------------------------------------------
+	//コピー先モデルの作成
+	//---------------------------------------------------------------------------------
+	if (pExtractedModelData != NULL) {
+		//----------------------------------------------------------------------------------
+		//モデルデータをコピー
+		//----------------------------------------------------------------------------------
+		for (i = 0; i < sizeOfModelIn32BitWord; i++) {
+			pExtractedModelData[i] = pModelData[i];
+		}
+		//----------------------------------------------------------------------------------
+		//コピー先ヘッダーを修正
+		//----------------------------------------------------------------------------------
+		pHeader = (SequentialNetHeader*)pExtractedModelData;
+		pHeader->numberOfLayers = numOfLyers;
+	}
+	//---------------------------------------------------------------------------------
+	//最終出力形状のセット
+	//---------------------------------------------------------------------------------
+	if (pOutputHeight != NULL) {
+		*pOutputHeight = outputShape.height;
+	}
+	if (pOutputWidth != NULL) {
+		*pOutputWidth = outputShape.width;
+	}
+	if (pOutputChannel != NULL) {
+		*pOutputChannel = outputShape.channel;
+	}
+	return TRUE;
+}
+
+//=====================================================================================
+//  
+//=====================================================================================
+bool_t
+SequentialNet_modelConverter3to4(uint32_t* pV3ModelData, uint32_t* pV4ModelData, uint32_t* pSizeOfModelIn32BitWord) {
+	uint32_t				iLayer,i;
+	uint32_t				sizeOfModelIn32BitWord;
+	SequentialNetHeader*	pHeader;
+	NeuralNetHeader*		pNeuralNetHeader;
+	LayerFuncTable			netLayerFuncTable;
+	uint32_t*				pLayerData;
+	uint32_t*				pDestination;
+	uint32_t*				pSource;
+	bool_t					fStatus;
+	//----------------------------------------------------------------------------------
+	//モデルデータチェック
+	//----------------------------------------------------------------------------------
+	if (pV3ModelData == NULL) {
+		return FALSE;
+	}
+	//----------------------------------------------------------------------------------
+	//バージョンチェック
+	//----------------------------------------------------------------------------------
+	pHeader = (SequentialNetHeader*)pV3ModelData;
+	if (pHeader->version != 3) {
+		return FALSE;
+	}
+	//----------------------------------------------------------------------------------
+	//ヘッダーサイズ
+	//----------------------------------------------------------------------------------
+	sizeOfModelIn32BitWord = size_in_type(sizeof(SequentialNetHeader), uint32_t);
+	//----------------------------------------------------------------------------------
+	//最初の層に移動
+	//----------------------------------------------------------------------------------
+	pLayerData = pV3ModelData + size_in_type(sizeof(SequentialNetHeader), uint32_t);
+	for (iLayer = 0; iLayer < pHeader->numberOfLayers; iLayer++) {
+		//---------------------------------------------------------------------------------
+		//層ヘッダー
+		//---------------------------------------------------------------------------------
+		pNeuralNetHeader = (NeuralNetHeader*)pLayerData;
+		//----------------------------------------------------------------------------------
+		//層構築関連関数インターフェース取得
+		//----------------------------------------------------------------------------------
+		fStatus = NetLayer_getInterface(pNeuralNetHeader, &netLayerFuncTable);
+		if (fStatus == FALSE) {
+			return FALSE;
+		}
+		//---------------------------------------------------------------------------------
+		//層データサイズを加算
+		//---------------------------------------------------------------------------------
+		switch (pNeuralNetHeader->layerType) {
+		case NET_LAYER_MAX_POOLING2D:
+			sizeOfModelIn32BitWord += (pNeuralNetHeader->sizeIn32BitWord + 1);	// v3データにはfPaddingが無い
+			break;
+		default:
+			sizeOfModelIn32BitWord += pNeuralNetHeader->sizeIn32BitWord;
+			break;
+		}
+		//---------------------------------------------------------------------------------
+		//次の層情報に移動
+		//---------------------------------------------------------------------------------
+		pLayerData += pNeuralNetHeader->sizeIn32BitWord;
+	}
+	//---------------------------------------------------------------------------------
+	//サイズをセット
+	//---------------------------------------------------------------------------------
+	if (pSizeOfModelIn32BitWord != NULL) {
+		*pSizeOfModelIn32BitWord = sizeOfModelIn32BitWord;
+	}
+	//---------------------------------------------------------------------------------
+	//コピー先モデルの作成
+	//---------------------------------------------------------------------------------
+	if (pV4ModelData != NULL) {
+		pSource = pV3ModelData;
+		pDestination = pV4ModelData;
+		//----------------------------------------------------------------------------------
+		//ヘッダーサイズ
+		//----------------------------------------------------------------------------------
+		sizeOfModelIn32BitWord = size_in_type(sizeof(SequentialNetHeader), uint32_t);
+		//----------------------------------------------------------------------------------
+		//ヘッダーコピー
+		//----------------------------------------------------------------------------------
+		for (i = 0; i < sizeOfModelIn32BitWord; i++) {
+			*pDestination++ = *pSource++;
+		}
+		//----------------------------------------------------------------------------------
+		//層データコピー
+		//----------------------------------------------------------------------------------
+		pLayerData = pSource;
+		for (iLayer = 0; iLayer < pHeader->numberOfLayers; iLayer++) {
+			//---------------------------------------------------------------------------------
+			//層ヘッダー
+			//---------------------------------------------------------------------------------
+			pNeuralNetHeader = (NeuralNetHeader*)pLayerData;
+			//----------------------------------------------------------------------------------
+			//層構築関連関数インターフェース取得
+			//----------------------------------------------------------------------------------
+			fStatus = NetLayer_getInterface(pNeuralNetHeader, &netLayerFuncTable);
+			if (fStatus == FALSE) {
+				return FALSE;
+			}
+			//---------------------------------------------------------------------------------
+			//層データサイズを加算
+			//---------------------------------------------------------------------------------
+			switch (pNeuralNetHeader->layerType) {
+			case NET_LAYER_MAX_POOLING2D:
+				// v3データにはfPaddingが無い
+				for (i = 0; i < pNeuralNetHeader->sizeIn32BitWord; i++) {
+					*pDestination++ = *pSource++;
+				}
+				// fPaddingを追加
+				*pDestination++ = 0;	// FALSE
+				break;
+			default:
+				// just copy
+				for (i = 0; i < pNeuralNetHeader->sizeIn32BitWord; i++) {
+					*pDestination++ = *pSource++;
+				}
+				break;
+			}
+			//---------------------------------------------------------------------------------
+			//次の層情報に移動
+			//---------------------------------------------------------------------------------
+			pLayerData += pNeuralNetHeader->sizeIn32BitWord;
+		}
+		//----------------------------------------------------------------------------------
+		//コピー先ヘッダーを修正
+		//----------------------------------------------------------------------------------
+		pHeader = (SequentialNetHeader*)pV4ModelData;
+		pHeader->version = MODEL_FILE_VERSION;
+	}
+	return TRUE;
+}

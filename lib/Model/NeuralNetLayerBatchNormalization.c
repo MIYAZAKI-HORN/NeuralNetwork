@@ -631,7 +631,7 @@ NeuralNetLayerBatchNormalization_getParameters(handle_t hLayer, flt32_t** ppPara
 		*ppParameters = (flt32_t*)pLayerParam;
 	}
 	if (pNumberOfParameters != NULL) {
-#if 0
+#if 1
 		//学習パラメタのみ
 		NeuralNetLayerBatchNormalization_getLayerInformation(pNeuralNetLayer->pLayerData, TRUE, NULL, pNumberOfParameters, NULL, NULL, NULL);
 #else
@@ -642,6 +642,33 @@ NeuralNetLayerBatchNormalization_getParameters(handle_t hLayer, flt32_t** ppPara
 		*pNumberOfParameters += pBatchNormalizationNeuralNetHeader->unit;	//Mean
 		*pNumberOfParameters += pBatchNormalizationNeuralNetHeader->unit;	//invStd
 #endif
+	}
+	return TRUE;
+}
+
+//=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerBatchNormalization_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	BatchNormalizationNeuralNetHeader* pBatchNormalizationNeuralNetHeader = (BatchNormalizationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pBatchNormalizationNeuralNetHeader;
+	if (pBatchNormalizationNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 0;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		// don't care
 	}
 	return TRUE;
 }
@@ -735,6 +762,7 @@ NeuralNetLayerBatchNormalization_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerBatchNormalization_update;
 	pInterface->pInitializeParameters = NeuralNetLayerBatchNormalization_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerBatchNormalization_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerBatchNormalization_getHyperParameters;
 }
 
 //=====================================================================================

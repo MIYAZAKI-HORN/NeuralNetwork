@@ -9,6 +9,16 @@ extern "C" {
 #include "NeuralNetOptimizer.h"
 #include "NeuralNetLayerActivation.h"
 
+//=====================================================================================
+//  外部関数呼び出し定義
+//=====================================================================================
+typedef bool_t(*sequentialnet_forward_controler)	(void* pUserData,uint32_t iLayer,flt32_t* pInputData, uint32_t inputDataArraySize);
+
+typedef struct tagSequentialNet_ExternalFuncTable {
+	void*							pUserData;
+	sequentialnet_forward_controler	pForwardControler;
+} SequentialNet_ExternalFuncTable;
+
 //==================================================================================================
 // 
 // シーケンシャルモデル
@@ -71,6 +81,14 @@ bool_t		SequentialNet_skipLastSoftmaxWhenBackpropagation(handle_t hModel, bool_t
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize);
 //-------------------------------------------------------------------------
+//  誤差逆伝搬の際の最終層（第一層）からの微分損失値を取得（複数のエンジンを連結する際に利用）
+//-------------------------------------------------------------------------
+bool_t		SequentialNet_getFinalDeltaLoss(handle_t hModel, flt32_t* pLoss, uint32_t arraySize);
+//-------------------------------------------------------------------------
+//  外部予備橋関数のセット
+//-------------------------------------------------------------------------
+bool_t		SequentialNet_setExternalFunctions(handle_t hModel, SequentialNet_ExternalFuncTable* pExternalFuncTable);
+//-------------------------------------------------------------------------
 // モデルヘッダ作成
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_createHeader(uint32_t* pBuffer,uint32_t sizeOfBufferIn32BitWord, uint32_t inHeight, uint32_t inWidth, uint32_t inChannel,uint32_t numberOfLayers,uint32_t* pSizeOfHeaderIn32BitWord);
@@ -97,7 +115,7 @@ bool_t		SequentialNet_appendPointwiseConv2D(uint32_t* pBuffer, uint32_t sizeOfBu
 //-------------------------------------------------------------------------
 // MaxPooling2D層作成
 //-------------------------------------------------------------------------
-bool_t		SequentialNet_appendMaxPooling2D(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight,uint32_t* pInputWidth,uint32_t* pInputChannel, uint32_t poolinghHeight, uint32_t poolingWidth, uint32_t strideHeight, uint32_t strideWidth, uint32_t* pSizeOfLayerIn32BitWord);
+bool_t		SequentialNet_appendMaxPooling2D(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight,uint32_t* pInputWidth,uint32_t* pInputChannel, uint32_t poolinghHeight, uint32_t poolingWidth, uint32_t strideHeight, uint32_t strideWidth, bool_t fPadding, uint32_t* pSizeOfLayerIn32BitWord);
 //-------------------------------------------------------------------------
 //  GlobalAveragePooling2D層作成
 //-------------------------------------------------------------------------
@@ -115,19 +133,29 @@ bool_t		SequentialNet_appendLayerNormalization(uint32_t* pBuffer, uint32_t sizeO
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_appendActivation(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, NeuralNetActivationType activation, uint32_t* pSizeOfLayerIn32BitWord);
 //-------------------------------------------------------------------------
+//  Activation ReLU層作成
+//-------------------------------------------------------------------------
+bool_t		SequentialNet_appendReLU(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, flt32_t negative_slope, uint32_t* pSizeOfLayerIn32BitWord);
+//-------------------------------------------------------------------------
 // PreDeconv2D層作成
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_appendPreDeconv2D(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t strideHeight, uint32_t strideWidth, uint32_t outHeight, uint32_t outWidth, uint32_t* pSizeOfLayerIn32BitWord);
 //-------------------------------------------------------------------------
 //  NeuralNetLayerResidualConnectionSender層作成
 //-------------------------------------------------------------------------
-bool_t
-SequentialNet_appendResidualConnectionSender(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t* pSizeOfLayerIn32BitWord);
+bool_t		SequentialNet_appendResidualConnectionSender(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t* pSizeOfLayerIn32BitWord);
 //-------------------------------------------------------------------------
 //  NeuralNetLayerResidualConnectionReceiver層作成
 //-------------------------------------------------------------------------
-bool_t
-SequentialNet_appendResidualConnectionReceiver(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t* pSizeOfLayerIn32BitWord);
+bool_t		SequentialNet_appendResidualConnectionReceiver(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t* pSizeOfLayerIn32BitWord);
+//-------------------------------------------------------------------------
+//  モデルの先頭から指定された層分のモデルを抽出する
+//-------------------------------------------------------------------------
+bool_t		SequentialNet_extractModel(uint32_t* pModelData, uint32_t numOfLyers, uint32_t* pExtractedModelData, uint32_t* pSizeOfModelIn32BitWord, uint32_t* pOutputHeight, uint32_t* pOutputWidth, uint32_t* pOutputChannel);
+//-------------------------------------------------------------------------
+//  
+//-------------------------------------------------------------------------
+bool_t		SequentialNet_modelConverter3to4(uint32_t* pV3ModelData, uint32_t* pV4ModelData, uint32_t* pSizeOfModelIn32BitWord);
 
 #ifdef __cplusplus
 }

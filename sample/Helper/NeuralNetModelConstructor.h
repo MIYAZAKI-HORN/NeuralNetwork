@@ -16,6 +16,7 @@ extern "C" {
 typedef struct tagLayerInformation {
 	NetLayerType	layerType;
 	uint32_t		parameterArray[LAYER_INFORMATION_MAX_PARAMS];
+	flt32_t			flt_parameterArray[LAYER_INFORMATION_MAX_PARAMS];
 	uint32_t		numberOfParams;
 } LayerInformation;
 
@@ -35,7 +36,7 @@ typedef struct tagModelInformation {
 // シーケンシャルモデルイメージを作成する関数
 //--------------------------------------------------------------------
 bool_t	
-constructNeuralNetModel(	ModelInformation*	pModelInformation,	//ネットワーク情報
+constructNeuralNetModel(	ModelInformation*	pModelInformation,		//ネットワーク情報
 							uint32_t**			ppNeuralNetworkImage,	//生成するニューラルネットワークイメージのポインタのポインタ
 							uint32_t*			pSizeOfImageIn32BitWord	//生成するニューラルネットワークイメージのサイズを取得するパラメタのポインタ
 );
@@ -47,10 +48,11 @@ void	sequential_model_header(ModelInformation* pModelInformation, uint32_t inHei
 bool_t	dense(ModelInformation* pModelInformation, uint32_t units);
 bool_t	simple_rnn(ModelInformation* pModelInformation, uint32_t units, uint32_t activation, uint32_t retuenSequence);
 bool_t	activation(ModelInformation* pModelInformation, uint32_t activation);
+bool_t	activationReLU(ModelInformation* pModelInformation, flt32_t negative_sloop);
 bool_t	conv2d(ModelInformation* pModelInformation, uint32_t filters,uint32_t kernel_height, uint32_t kernel_width, uint32_t stride_height, uint32_t stride_width,bool_t	fPadding);
 bool_t	depthwise_conv2d(ModelInformation* pModelInformation, uint32_t nfilters, uint32_t kernel_height, uint32_t kernel_width, uint32_t stride_height, uint32_t stride_width, bool_t fPadding);
 bool_t	pointwise_conv2d(ModelInformation* pModelInformation, uint32_t pw_filters);
-bool_t	max_pooling2d(ModelInformation* pModelInformation, uint32_t pool_height, uint32_t pool_width, uint32_t stride_height, uint32_t stride_width);
+bool_t	max_pooling2d(ModelInformation* pModelInformation, uint32_t pool_height, uint32_t pool_width, uint32_t stride_height, uint32_t stride_width,bool_t fPadding);
 bool_t	global_average_pooling2d(ModelInformation* pModelInformation);
 bool_t	batch_normalization(ModelInformation* pModelInformation);
 bool_t	layer_normalization(ModelInformation* pModelInformation);

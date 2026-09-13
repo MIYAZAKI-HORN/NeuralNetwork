@@ -428,6 +428,33 @@ NeuralNetLayerResidualConnectionSender_getParameters(handle_t hLayer, flt32_t** 
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerResidualConnectionSender_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	ResidualConnectionSenderNeuralNetHeader* pResidualConnectionSenderNeuralNetHeader = (ResidualConnectionSenderNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pResidualConnectionSenderNeuralNetHeader;
+	if (pResidualConnectionSenderNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 0;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		// don't care
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -495,6 +522,7 @@ NeuralNetLayerResidualConnectionSender_getInterface(LayerFuncTable* pInterface) 
 	pInterface->pUpdate = NeuralNetLayerResidualConnectionSender_update;
 	pInterface->pInitializeParameters = NeuralNetLayerResidualConnectionSender_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerResidualConnectionSender_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerResidualConnectionSender_getHyperParameters;
 }
 
 //=====================================================================================
@@ -914,6 +942,33 @@ NeuralNetLayerResidualConnectionReceiver_getParameters(handle_t hLayer, flt32_t*
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerResidualConnectionReceiver_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	ResidualConnectionReceiverNeuralNetHeader* pResidualConnectionReceiverNeuralNetHeader = (ResidualConnectionReceiverNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pResidualConnectionReceiverNeuralNetHeader;
+	if (pResidualConnectionReceiverNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 0;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		// don't care
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -975,6 +1030,7 @@ NeuralNetLayerResidualConnectionReceiver_getInterface(LayerFuncTable* pInterface
 	pInterface->pUpdate = NeuralNetLayerResidualConnectionReceiver_update;
 	pInterface->pInitializeParameters = NeuralNetLayerResidualConnectionReceiver_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerResidualConnectionReceiver_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerResidualConnectionReceiver_getHyperParameters;
 }
 
 //=====================================================================================

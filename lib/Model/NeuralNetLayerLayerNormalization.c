@@ -202,11 +202,11 @@ NeuralNetLayerLayerNormalization_forward(handle_t hLayer, PropagationInfo* pProp
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//正規化処理の対処うデータ
+	//正規化処理の対処データ
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	//---------------------------------------------------------------------------------
-	//正規化処理：channel方向にかける場合とwidth方向にかける場合がある
+	//正規化処理
 	//---------------------------------------------------------------------------------
 	NeuralNetLayerLayerNormalization_forward_calculation(size,*pGamma,*pBeta,&pLayerNormalizationLayer->mean,&pLayerNormalizationLayer->invStd,pX,pPropagationInfo->pInputBuffer,pPropagationInfo->pOutputBuffer);
 	//---------------------------------------------------------------------------------
@@ -435,6 +435,33 @@ NeuralNetLayerLayerNormalization_getParameters(handle_t hLayer, flt32_t** ppPara
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerLayerNormalization_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	LayerNormalizationNeuralNetHeader* pLayerNormalizationNeuralNetHeader = (LayerNormalizationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pLayerNormalizationNeuralNetHeader;
+	if (pLayerNormalizationNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 0;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		// don't care
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -509,6 +536,7 @@ NeuralNetLayerLayerNormalization_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerLayerNormalization_update;
 	pInterface->pInitializeParameters = NeuralNetLayerLayerNormalization_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerLayerNormalization_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerLayerNormalization_getHyperParameters;
 }
 
 //=====================================================================================

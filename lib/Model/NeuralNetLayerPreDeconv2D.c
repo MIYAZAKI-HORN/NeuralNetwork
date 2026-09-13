@@ -427,6 +427,41 @@ NeuralNetLayerPreDeconv2D_getParameters(handle_t hLayer, flt32_t** ppParameters,
 }
 
 //=====================================================================================
+//  ハイパーパラメタ情報取得
+//=====================================================================================
+static
+bool_t
+NeuralNetLayerPreDeconv2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
+	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
+	PreDeconv2DNeuralNetHeader* pPreDeconv2DNeuralNetHeader = (PreDeconv2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
+	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pPreDeconv2DNeuralNetHeader;
+	if (pPreDeconv2DNeuralNetHeader == NULL) {
+		return FALSE;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ数
+	//---------------------------------------------------------------------------------
+	if (pNumberOfParameters != NULL) {
+		*pNumberOfParameters = 4;
+	}
+	//---------------------------------------------------------------------------------
+	//ハイパーパラメタ内容
+	//---------------------------------------------------------------------------------
+	if (pParameterArray != NULL) {
+		if (parameterArraySize >= 4) {
+			pParameterArray[0] = (flt32_t)pPreDeconv2DNeuralNetHeader->strideHeight;
+			pParameterArray[1] = (flt32_t)pPreDeconv2DNeuralNetHeader->strideWidth;
+			pParameterArray[2] = (flt32_t)pPreDeconv2DNeuralNetHeader->outHeight;
+			pParameterArray[3] = (flt32_t)pPreDeconv2DNeuralNetHeader->outWidth;
+		}
+		else {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+//=====================================================================================
 //  層構築
 //=====================================================================================
 static
@@ -468,6 +503,7 @@ NeuralNetLayerPreDeconv2D_getInterface(LayerFuncTable* pInterface) {
 	pInterface->pUpdate = NeuralNetLayerPreDeconv2D_update;
 	pInterface->pInitializeParameters = NeuralNetLayerPreDeconv2D_initializeParameters;
 	pInterface->pGetParameters = NeuralNetLayerPreDeconv2D_getParameters;
+	pInterface->pGetHyperParameters = NeuralNetLayerPreDeconv2D_getHyperParameters;
 }
 
 //=====================================================================================
