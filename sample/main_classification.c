@@ -74,7 +74,7 @@ typedef struct tagModelInformationEx {
 //-----------------------------------------------------------------------------------------------------
 #define DATA_FOLDER ("..\\Data\\")
 
-#define TRAIN_IMAGE_DATA_FILE_NAME		("MNIST\\MNIST_trainHalf.csv")
+#define TRAIN_IMAGE_DATA_FILE_NAME		("MNIST\\MNIST_train.csv")
 #define TEST_IMAGE_DATA_FILE_NAME		("MNIST\\MNIST_test.csv")
 #define MODEL_FILE_NAME					("mnist.nnm")
 
