@@ -23,7 +23,7 @@ typedef struct tagLayerInformation {
 //--------------------------------------------------------------------
 // シーケンシャルモデル情報構造体
 //--------------------------------------------------------------------
-#define MAX_LAYERS	(200)
+#define MAX_LAYERS	(100)
 typedef struct tagModelInformation {
 	uint32_t			inHeight;
 	uint32_t			inWidth;
