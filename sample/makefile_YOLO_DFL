@@ -1,0 +1,28 @@
+CC	:= gcc
+
+CFLAGS	:= -c -O2 -W -I./Model -I./Helper -I./Test
+LFLAGS	:= -lm -Wall
+
+SOURCE	:= 	./main_YOLO_DFL.c			\
+		./Helper/LOG_Function.c			\
+		./Helper/NeuralNetModelConstructor.c	\
+		./Helper/YOLO_DFL_Computation.c	\
+
+OBJS	:= 	./main_YOLO_DFL.o			\
+		./LOG_Function.o			\
+		./NeuralNetModelConstructor.o		\
+		./YOLO_DFL_Computation.o		\
+
+LIBRARY	  := ./Model/SequentialNet.lib
+
+PROGRAM	  := sample_yolo_dfl.exe
+
+
+build:
+	$(CC) $(CFLAGS) $(SOURCE)
+	$(CC) $(OBJS) $(LIBRARY) $(LFLAGS) -o $(PROGRAM)
+	rm *.o
+
+clean:
+	rm $(PROGRAM)
+	rm *.o
