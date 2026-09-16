@@ -234,7 +234,7 @@ constructNeuralNetModelImage(	uint32_t			inHeight,
 	//-----------------------------------------------------
 	//Å@title
 	//-----------------------------------------------------
-	sprintf(strInformation, "type                 \toutput\tsize\n");
+	sprintf(strInformation, "type                 \toutput\tlayer size\n");
 	SAVE_LOG_WITHOUT_RETURN(strInformation);
 	sprintf(strInformation, "--------------------------------------\n");
 	SAVE_LOG_WITHOUT_RETURN(strInformation);
