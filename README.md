@@ -43,8 +43,17 @@
 		The cross-entropy error and classification rate are displayed sequentially for the training data and validation data.
 		Verification data:MNIST in CSV format
 	regression problem
-		Build a fully connected neural network,
-		Giving initial values to the neural network parameters, perform training on the specified number of epochs.
-		Sequentially display the mean squared error on the training data and validation data.
-		Validation data:Boston House Prices in CSV format
-		
+		classification problem
+		Build a fully connected neural network or a convolutional neural network,
+		Giving initial values to the parameters of the neural network, perform learning on the specified number of epochs.
+		The cross-entropy error and classification rate are displayed sequentially for the training data and validation data.
+		Verification data:MNIST in CSV format
+	YOLO
+		This is a sample program designed to verify the object detection training capabilities of the YOLO (You Only Look Once) algorithm implemented in C.
+		Among the various techniques proposed during the evolution of YOLO, this sample program primarily utilizes the following:
+		1. DFL (Distribution Focal Loss)
+			Treats the boundary positions of the bounding box as probability distributions rather than continuous values, predicting the ground-truth position probabilistically.
+		2. CIoU (Complete IoU) Loss
+			Improves box convergence speed and accuracy by accounting for the alignment of center distances and aspect ratios.
+		3. Focal Loss for class classification probability calculation
+			Renowned for ensuring training stability, particularly regarding the overwhelmingly large number of background grid cells.
