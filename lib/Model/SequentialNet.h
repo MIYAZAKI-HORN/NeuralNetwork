@@ -37,7 +37,7 @@ uint32_t	SequentialNet_getSizeIn32BitWord(uint32_t* pModelData, bool_t fEnableLe
 //-------------------------------------------------------------------------
 handle_t	SequentialNet_construct(uint32_t* pModelData, bool_t fEnableLearning, uint32_t batchSize, NeuralNetOptimizerType optimizer, uint32_t numberOfBackPropagationLayers, uint32_t* pWorkArea, uint32_t sizeOfWorkAreaIn32BitWord);
 //-------------------------------------------------------------------------
-// 計算実効
+// 予測計算実効
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_predict(handle_t hModel, flt32_t* pInputData, uint32_t inputDataArraySize);
 //-------------------------------------------------------------------------
@@ -85,7 +85,7 @@ bool_t		SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize);
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_getFinalDeltaLoss(handle_t hModel, flt32_t* pLoss, uint32_t arraySize);
 //-------------------------------------------------------------------------
-//  外部予備橋関数のセット
+//  外部関数のセット
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_setExternalFunctions(handle_t hModel, SequentialNet_ExternalFuncTable* pExternalFuncTable);
 //-------------------------------------------------------------------------

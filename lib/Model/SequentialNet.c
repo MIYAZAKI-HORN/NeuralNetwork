@@ -1210,7 +1210,7 @@ SequentialNet_getFinalDeltaLoss(handle_t hModel, flt32_t* pLoss, uint32_t arrayS
 }
 
 //=====================================================================================
-//  外部予備橋関数のセット
+//  外部関数のセット
 //=====================================================================================
 bool_t		
 SequentialNet_setExternalFunctions(handle_t hModel, SequentialNet_ExternalFuncTable* pExternalFuncTable) {
