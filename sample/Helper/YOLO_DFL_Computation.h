@@ -26,7 +26,7 @@ typedef struct tagDFL_Monitor {
 // YOLO DFLトレーニング関数
 //=====================================================================================
 bool_t
-YORO_DFL_Training(
+YOLO_DFL_Training(
 	int32_t		gridSize,
 	int32_t		distributionMapSize,
 	int32_t		nClasses,

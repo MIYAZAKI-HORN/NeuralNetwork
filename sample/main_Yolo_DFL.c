@@ -21,7 +21,7 @@
 //　　　YOLOの初期バージョンで利用されていた、信頼度は利用せず、バウンディングボックスの存在しないグリッドは、
 //　　　クラス分類の確率を利用して、閾値で背景と判断します。
 //
-//　上記実装は、YORO_DFL_Training関数内に実装されています。
+//　上記実装は、YOLO_DFL_Training関数内に実装されています。
 // 
 //　【学習データ】
 //　１．https://universe.roboflow.com/browse　からダウンロードした、二種類の学習データを利用しています。
@@ -461,7 +461,7 @@ int main(int argc, char* argv[])
 			//YOLO損失値と逆伝搬値を得る
 			// 
 			//-------------------------------------------------------------------------
-			YORO_DFL_Training(
+			YOLO_DFL_Training(
 				GRID_SIZE,					//グリッドサイズ
 				DISTRIBUTIONAL_MAP_SIZE,	//DFL確率マップサイズ
 				CLASS_SIZE,					//分類数

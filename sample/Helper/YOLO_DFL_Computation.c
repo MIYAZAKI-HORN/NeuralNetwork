@@ -531,7 +531,7 @@ compute_ciou_loss(	flt32_t*	pTrueBox,
 #define MAX_DISTIBUTION_MAP	(16)
 
 bool_t
-YORO_DFL_Training(
+YOLO_DFL_Training(
 	int32_t		gridSize,
 	int32_t		distributionMapSize,
 	int32_t		nClasses,
