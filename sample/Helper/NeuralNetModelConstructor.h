@@ -11,13 +11,15 @@ extern "C" {
 //--------------------------------------------------------------------
 // レイヤー情報構造体
 //--------------------------------------------------------------------
-#define LAYER_INFORMATION_MAX_PARAMS	(10)
+#define LAYER_INFORMATION_MAX_PARAMS		(10)
+#define LAYER_INFORMATION_MAX_COMENT_LENGTH	(50)
 
 typedef struct tagLayerInformation {
 	NetLayerType	layerType;
 	uint32_t		parameterArray[LAYER_INFORMATION_MAX_PARAMS];
 	flt32_t			flt_parameterArray[LAYER_INFORMATION_MAX_PARAMS];
 	uint32_t		numberOfParams;
+	char			comment[LAYER_INFORMATION_MAX_COMENT_LENGTH];
 } LayerInformation;
 
 //--------------------------------------------------------------------
@@ -59,6 +61,7 @@ bool_t	layer_normalization(ModelInformation* pModelInformation);
 bool_t	predeconv2d(ModelInformation* pModelInformation,uint32_t stride_height,uint32_t stride_width,uint32_t out_height,uint32_t out_width);
 bool_t	residual_connection_sender(ModelInformation* pModelInformation);
 bool_t	residual_connection_receiver(ModelInformation* pModelInformation);
+bool_t	self_attention(ModelInformation* pModelInformation, uint32_t dim_k,uint32_t	dim_v);
 
 //--------------------------------------------------------------------
 // シーケンシャルモデル定義テキストファイルからレイヤー情報を取得する

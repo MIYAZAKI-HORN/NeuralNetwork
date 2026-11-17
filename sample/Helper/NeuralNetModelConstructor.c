@@ -19,6 +19,10 @@ constructLayer(uint32_t* pBuffer, uint32_t bufferSizeIn32BitWord, uint32_t* pInp
 	uint32_t	kernelWidth;
 	uint32_t	strideHeight;
 	uint32_t	strideWidth;
+	uint32_t	num_heads;
+	uint32_t	dim_k;
+	uint32_t	dim_v;
+	SelfAttentionMode	selfAttentionMode;
 	uint32_t	outHeight;
 	uint32_t	outWidth;
 	uint32_t	poolingHeight;
@@ -176,6 +180,16 @@ constructLayer(uint32_t* pBuffer, uint32_t bufferSizeIn32BitWord, uint32_t* pInp
 			strcpy(pLayerName, "residual receiver   ");
 		}
 		fStatus = SequentialNet_appendResidualConnectionReceiver(pBuffer, bufferSizeIn32BitWord, pInputHeight, pInputWidth, pInputChannel, pLayerImageSizeIn32BitWord);
+		break;
+	case NET_LAYER_SELF_ATTENTION:
+		if (pLayerName != NULL) {
+			strcpy(pLayerName, "self attention      ");
+		}
+		selfAttentionMode = (SelfAttentionMode)pLayerInformation->parameterArray[0];
+		num_heads = pLayerInformation->parameterArray[1];
+		dim_k = pLayerInformation->parameterArray[2];
+		dim_v = pLayerInformation->parameterArray[3];
+		fStatus = SequentialNet_appendSelfAttention(pBuffer, bufferSizeIn32BitWord, pInputHeight, pInputWidth, pInputChannel, selfAttentionMode, num_heads, dim_k, dim_v, pLayerImageSizeIn32BitWord);
 		break;
 	default:
 		fStatus = FALSE;
@@ -560,6 +574,21 @@ residual_connection_receiver(ModelInformation* pModelInformation) {
 	return TRUE;
 }
 
+bool_t
+self_attention(ModelInformation* pModelInformation,
+	uint32_t	dim_k,
+	uint32_t	dim_v) {
+	if (pModelInformation->numberOfLayers == MAX_LAYERS) {
+		printf("number of layers exceeded the limit\n");
+		return FALSE;
+	}
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].layerType = NET_LAYER_SELF_ATTENTION;
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[0] = dim_k;
+	pModelInformation->layerArray[pModelInformation->numberOfLayers].parameterArray[1] = dim_v;
+	pModelInformation->numberOfLayers++;
+	return TRUE;
+}
+
 //--------------------------------------------------------------------
 // レイヤーパラメタの取得
 //--------------------------------------------------------------------
@@ -635,16 +664,56 @@ compareString(char* pString, char* pStringCompared, char** ppParameters) {
 }
 
 //--------------------------------------------------------------------
+// 探索
+//--------------------------------------------------------------------
+static
+bool_t
+findComment(char* pString, char* pStringToFind, char** ppStringFollowed) {
+	int i,j;
+	int length = 0;
+	int lengthCompred = 0;
+	char* pHead = pString;
+	while (*pHead++ != '\0') {
+		length++;
+	}
+	pHead = pStringToFind;
+	while (*pHead++ != '\0') {
+		lengthCompred++;
+	}
+	if (length < lengthCompred) {
+		return FALSE;
+	}
+	int pos = 0;
+	i = length;
+	while (i--) {
+		int k = 0;
+		if (pString[pos] == pStringToFind[k]) {
+			for (j = 0; j < lengthCompred; j++) {
+				if (pString[pos+j] == pStringToFind[k]) {
+					k++;
+				}
+			}
+			if (k == lengthCompred) {
+				*ppStringFollowed = pString + pos + lengthCompred;
+				return TRUE;
+			}
+		}
+		pos++;
+	}
+	return FALSE;
+}
+
+//--------------------------------------------------------------------
 // シーケンシャルモデル定義テキストファイルからレイヤー情報を取得する
 //--------------------------------------------------------------------
 void
 getLayerInformation(char* pLayerInformationText, uint32_t* pInputDim, LayerInformation* pLayerInformationArray, uint32_t* pNumberOfLayers) {
-	char* pLast;
-	char* pHead = pLayerInformationText;
-	char* pParam;
+	char*	pLast;
+	char*	pHead = pLayerInformationText;
+	char*	pParam;
 	int		length = 0;
 	int		lineLength;
-	char* pLayerParameters;
+	char*	pLayerParameters;
 	LayerInformation* pLayerInformation = pLayerInformationArray;
 	uint32_t numberOfParams = 0;
 	while (*pHead++ != '\0') {
@@ -660,6 +729,29 @@ getLayerInformation(char* pLayerInformationText, uint32_t* pInputDim, LayerInfor
 			*pParam = '\0';
 			if (pHead != pParam) {
 				if (pHead[0] != '/' && pHead[1] != '/') {
+					//------------------------------------
+					//層情報にコメントがある場合
+					//------------------------------------
+					if (findComment(pHead + 5, "//\0", &pLayerParameters) == TRUE) {
+						//コメントあり
+						int length = strlen(pLayerParameters);
+						if (length > 1) {
+							pLayerParameters[length-1] = '\0';	//\r
+							if (length > LAYER_INFORMATION_MAX_COMENT_LENGTH) {
+								pLayerParameters[LAYER_INFORMATION_MAX_COMENT_LENGTH-1] = '\0';
+							}
+							strcpy(pLayerInformation->comment, pLayerParameters);
+						}
+						else {
+							pLayerInformation->comment[0] = '\0';
+						}
+					}
+					else {
+						pLayerInformation->comment[0] = '\0';
+					}
+					//------------------------------------
+					//層情報とパラメタ
+					//------------------------------------
 					lineLength = pParam - pHead;
 					if (compareString(pHead, "input\0", &pLayerParameters) == TRUE) {
 						getLayerParameters(pLayerParameters, pInputDim, NULL, &numberOfParams);
@@ -751,6 +843,13 @@ getLayerInformation(char* pLayerInformationText, uint32_t* pInputDim, LayerInfor
 					}
 					else if (compareString(pHead, "residual_connection_receiver\0", &pLayerParameters) == TRUE) {
 						pLayerInformation->layerType = NET_LAYER_RESIDUAL_CONNECTION_RECEIVER;
+						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
+						pLayerInformation->numberOfParams = numberOfParams;
+						(*pNumberOfLayers)++;
+						pLayerInformation++;
+					}
+					else if (compareString(pHead, "self_attention\0", &pLayerParameters) == TRUE) {
+						pLayerInformation->layerType = NET_LAYER_SELF_ATTENTION;
 						getLayerParameters(pLayerParameters, pLayerInformation->parameterArray, pLayerInformation->flt_parameterArray, &numberOfParams);
 						pLayerInformation->numberOfParams = numberOfParams;
 						(*pNumberOfLayers)++;

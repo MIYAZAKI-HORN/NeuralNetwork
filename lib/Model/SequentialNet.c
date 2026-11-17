@@ -14,6 +14,7 @@
 #include "NeuralNetLayerLayerNormalization.h"
 #include "NeuralNetLayerPreDeconv2D.h"
 #include "NeuralNetLayerResidualConnection.h"
+#include "NeuralNetLayerSelfAttention.h"
 #include "RandomValueGenerator.h"
 #include "NeuralNetOptimizer.h"
 
@@ -74,6 +75,9 @@ NetLayer_getInterface(NeuralNetHeader* pNeuralNetHeader, LayerFuncTable* pInterf
 		break;
 	case NET_LAYER_RESIDUAL_CONNECTION_RECEIVER:
 		NeuralNetLayerResidualConnectionReceiver_getInterface(pInterface);
+		break;
+	case NET_LAYER_SELF_ATTENTION:
+		NeuralNetLayerSelfAttention_getInterface(pInterface);
 		break;
 	default:
 		//ÉGÉâÅ[
@@ -296,7 +300,7 @@ SequentialNet_update(handle_t hModel) {
 		}
 	}
 	//---------------------------------------------------------------------------------
-	//ãtì`î¿ÉJÉEÉìÉ^Çèâä˙âª
+	//ãtì`îdÉJÉEÉìÉ^Çèâä˙âª
 	//---------------------------------------------------------------------------------
 	This->backPropagationCounter = 0;
 	return TRUE;
@@ -346,13 +350,13 @@ SequentialNet_getSizeIn32BitWord(uint32_t* pModelData, bool_t fEnableLearning,Ne
 	//----------------------------------------------------------------------------------
 	pHeader = (SequentialNetHeader*)pModelData;
 	//----------------------------------------------------------------------------------
-	//ãtì`î¿ëwêîÇ™ëçëwêîÇí¥Ç¶ÇÈèÍçáÇÕÅAëwëçêîÇ…íuÇ´ä∑Ç¶Ç∑ÇÈ
+	//ãtì`îdëwêîÇ™ëçëwêîÇí¥Ç¶ÇÈèÍçáÇÕÅAëwëçêîÇ…íuÇ´ä∑Ç¶Ç∑ÇÈ
 	//----------------------------------------------------------------------------------
 	if (numberOfBackPropagationLayers > pHeader->numberOfLayers) {
 		numberOfBackPropagationLayers = pHeader->numberOfLayers;
 	}
 	//----------------------------------------------------------------------------------
-	//ãtì`î¿ëwêîÇ…0Çê›íËÇµÇΩèÍçáÇÕëçëwêîÇ∆Ç∑ÇÈ
+	//ãtì`îdëwêîÇ…0Çê›íËÇµÇΩèÍçáÇÕëçëwêîÇ∆Ç∑ÇÈ
 	//----------------------------------------------------------------------------------
 	if (numberOfBackPropagationLayers == 0) {
 		numberOfBackPropagationLayers = pHeader->numberOfLayers;
@@ -441,13 +445,13 @@ SequentialNet_construct(uint32_t* pModelData,bool_t fEnableLearning,uint32_t bat
 	//----------------------------------------------------------------------------------
 	pHeader = (SequentialNetHeader*)pModelData;
 	//----------------------------------------------------------------------------------
-	//ãtì`î¿ëwêîÇ™ëçëwêîÇí¥Ç¶ÇÈèÍçáÇÕëwëçêîÇ…íuÇ´ä∑Ç¶
+	//ãtì`îdëwêîÇ™ëçëwêîÇí¥Ç¶ÇÈèÍçáÇÕëwëçêîÇ…íuÇ´ä∑Ç¶
 	//----------------------------------------------------------------------------------
 	if (numberOfBackPropagationLayers > pHeader->numberOfLayers) {
 		numberOfBackPropagationLayers = pHeader->numberOfLayers;
 	}
 	//----------------------------------------------------------------------------------
-	//ãtì`î¿ëwêîÇ…0Çê›íËÇ∑ÇÈÇ∆ëçëwêî
+	//ãtì`îdëwêîÇ…0Çê›íËÇ∑ÇÈÇ∆ëçëwêî
 	//----------------------------------------------------------------------------------
 	if (numberOfBackPropagationLayers == 0) {
 		numberOfBackPropagationLayers = pHeader->numberOfLayers;
@@ -695,26 +699,26 @@ SequentialNet_predict(handle_t hModel,flt32_t* pInputData,uint32_t inputDataArra
 		propagationInfo.pInputBuffer = This->pInputBuffer;
 		propagationInfo.pOutputBuffer = This->pOutputBuffer;
 		//---------------------------------------------------------------------------------
-		//èáì`î¿ê›íË
+		//èáì`îdê›íË
 		//---------------------------------------------------------------------------------
-		//default:èáì`î¿Çé¿é{Ç∑ÇÈïKóvÇ™Ç†ÇÈ
+		//default:èáì`îdÇé¿é{Ç∑ÇÈïKóvÇ™Ç†ÇÈ
 		fDoLayerForward = TRUE;
 		//äOïîä÷êîÇ™íËã`Ç≥ÇÍÇƒÇ¢ÇÈèÍçáÇÕÇ±ÇÍÇ…è]Ç§
 		if (This->pExternalFuncTable != NULL && This->pExternalFuncTable->pForwardControler != NULL) {
 			//---------------------------------------------------------------------------------
-			//èáì`î¿êßå‰ä÷êîÅiíÜä‘ëwÉfÅ[É^ì¸èoóÕêßå‰Åj
+			//èáì`îdêßå‰ä÷êîÅiíÜä‘ëwÉfÅ[É^ì¸èoóÕêßå‰Åj
 			//---------------------------------------------------------------------------------
 			if ( This->pExternalFuncTable->pForwardControler != NULL ) {
 				//ãtì`îdëwì¸óÕÉfÅ[É^ÇäOïîÇ…à¯Ç´ìnÇ∑/à¯Ç´ñﬂÇ∑Ç»Ç«Ç…óòópÇ∑ÇÈ
 				pLayerInput = propagationInfo.pInputBuffer;
 				layerInputDim = DataShape_getSize(&propagationInfo.dataShape);
-				//èáì`î¿Çé¿é{Ç∑ÇÈèÍçáÇÕTRUEÇï‘Ç∑
+				//èáì`îdÇé¿é{Ç∑ÇÈèÍçáÇÕTRUEÇï‘Ç∑
 				fDoLayerForward = This->pExternalFuncTable->pForwardControler(This->pExternalFuncTable->pUserData, iLayer, pLayerInput, layerInputDim);
 			}
 		}
-		//èåèÇ…çáívÇµÇƒÇ¢ÇÈèÍçáÇ…èáì`î¿Çé¿é{Ç∑ÇÈ
+		//èåèÇ…çáívÇµÇƒÇ¢ÇÈèÍçáÇ…èáì`îdÇé¿é{Ç∑ÇÈ
 		if (fDoLayerForward == TRUE) {
-			//èáì`î¿
+			//èáì`îd
 			fStatus = NeuralNetLayer_forward(This->pLayerArray[iLayer], &propagationInfo);
 			if (fStatus == FALSE) {
 				return FALSE;
@@ -853,7 +857,6 @@ SequentialNet_getNumberOfLayers(handle_t hModel, uint32_t* pNumOfLayers) {
 bool_t		
 SequentialNet_getLayerType(handle_t hModel,uint32_t layerIndex, NetLayerType* pNetLayerType) {
 	SequentialNet*		This = (SequentialNet*)hModel;
-	NeuralNetHeader*	pNeuralNetHeader = NULL;
 	//---------------------------------------------------------------------------------
 	//ÉGÉâÅ[ÉnÉìÉhÉäÉìÉO
 	//---------------------------------------------------------------------------------
@@ -875,7 +878,6 @@ SequentialNet_getLayerType(handle_t hModel,uint32_t layerIndex, NetLayerType* pN
 bool_t
 SequentialNet_getLayerHandle(handle_t hModel, uint32_t layerIndex, handle_t* phLayer) {
 	SequentialNet*		This = (SequentialNet*)hModel;
-	NeuralNetHeader*	pNeuralNetHeader = NULL;
 	//---------------------------------------------------------------------------------
 	//ÉGÉâÅ[ÉnÉìÉhÉäÉìÉO
 	//---------------------------------------------------------------------------------
@@ -925,7 +927,7 @@ SequentialNet_initializeParameter(handle_t hModel) {
 		}
 	}
 	//---------------------------------------------------------------------------------
-	//ãtì`î¿ÉJÉEÉìÉ^Çèâä˙âª
+	//ãtì`îdÉJÉEÉìÉ^Çèâä˙âª
 	//---------------------------------------------------------------------------------
 	This->backPropagationCounter = 0;
 	return TRUE;
@@ -937,7 +939,6 @@ SequentialNet_initializeParameter(handle_t hModel) {
 handle_t
 SequentialNet_getOptimizer(handle_t hModel, uint32_t layerIndex) {
 	SequentialNet* This = (SequentialNet*)hModel;
-	NeuralNetHeader* pNeuralNetHeader = NULL;
 	if (This == NULL) {
 		return NULL;
 	}
@@ -948,7 +949,7 @@ SequentialNet_getOptimizer(handle_t hModel, uint32_t layerIndex) {
 }
 
 //=====================================================================================
-//  åÎç∑ãtì`î¿éûÇ…ç≈èIëwÇÃsoftmaxÇÉXÉLÉbÉvÇ∑ÇÈÇ©î€Ç©ÇÃê›íËÇçsÇ§ÅiÉfÉtÉHÉãÉgÇÕÉXÉLÉbÉvÅj
+//  åÎç∑ãtì`îdéûÇ…ç≈èIëwÇÃsoftmaxÇÉXÉLÉbÉvÇ∑ÇÈÇ©î€Ç©ÇÃê›íËÇçsÇ§ÅiÉfÉtÉHÉãÉgÇÕÉXÉLÉbÉvÅj
 //	ï™óﬁñ‚ëËÇÃÉçÉXåvéZÇÅAÅisoftmaxÅ{ÉNÉçÉXÉGÉìÉgÉçÉsÅ[ÅjÇ∆ÇµÇΩèÍçáÅAÅiê≥âíl-ó\ë™ílÅjÇ∆ä»íPÇ…Ç»ÇÈÇΩÇﬂÅA
 //	ç≈èIëwÇÃsoftmaxÇÕÉXÉLÉbÉvÇ∑ÇÈÇ∆ó^Ç¶ÇÈÉçÉXåvéZÇ™ä»íPÇ…Ç»ÇÈÅB
 //=====================================================================================
@@ -963,11 +964,11 @@ SequentialNet_skipLastSoftmaxWhenBackpropagation(handle_t hModel, bool_t fSkip) 
 }
 
 //=====================================================================================
-//  äwèKÅiåÎç∑ãtì`î¿Åj
+//  äwèKÅiåÎç∑ãtì`îdÅj
 //=====================================================================================
 bool_t
 SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
-	uint32_t				i,j;
+	uint32_t				i;
 	SequentialNet*			This = (SequentialNet*)hModel;
 	uint32_t				inputDim;
 	uint32_t				outputDim;
@@ -1017,7 +1018,7 @@ SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
 		return TRUE;
 	}
 	//----------------------------------------------------------------------------------
-	//ÉpÉâÉÅÉ^ÇçXêVÇµÇΩÇÃÇøÇ…åÎç∑ãtì`î¿Çé¿é{ÇµÇΩâÒêî
+	//ÉpÉâÉÅÉ^ÇçXêVÇµÇΩÇÃÇøÇ…åÎç∑ãtì`îdÇé¿é{ÇµÇΩâÒêî
 	//----------------------------------------------------------------------------------
 	This->backPropagationCounter++;
 	//---------------------------------------------------------------------------------
@@ -1046,7 +1047,7 @@ SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
 	propagationInfo.pOutputBuffer = This->pOutputBuffer;
 	propagationInfo.pTemporaryBuffer = This->pTemporaryBuffer;
 	//---------------------------------------------------------------------------------
-	//ãtì`î¿ÇÃäJénëwÇëIë
+	//ãtì`îdÇÃäJénëwÇëIë
 	//layerOrder : 1Å@Å`Å@This->numberOfLayers
 	//ç≈èIëwÇ™activationëwÇ≈ÅAsoftmaxÇÃèÍçáÇÕÅAt-yÇ™Ç±ÇÃëwÇçûÇ›Ç∆ÇµÇΩÉçÉXÇ∆ÇµÇƒó^Ç¶ÇÁÇÍÇÈÇ±Ç∆ÇëOíÒÇ∆ÇµÇƒÅAÉXÉLÉbÉvÇ∑ÇÈÅiä»íPÇÃÇΩÇﬂÅj
 	//---------------------------------------------------------------------------------
@@ -1066,23 +1067,23 @@ SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
 				targetLayerOrder = This->numberOfLayers - 1;	// skip softmax
 			}
 			else {
-				//ÇªÇÍà»äOÇÃäàê´âªä÷êîÇÕãtì`î¿ÇÃëŒè€Ç∆Ç»ÇÈ
+				//ÇªÇÍà»äOÇÃäàê´âªä÷êîÇÕãtì`îdÇÃëŒè€Ç∆Ç»ÇÈ
 				targetLayerOrder = This->numberOfLayers;
 			}
 			break;
 		default:
 			//activationëwà»äOÇÃëw
-			//ç≈èIëwÇ©ÇÁãtì`î¿
+			//ç≈èIëwÇ©ÇÁãtì`îd
 			targetLayerOrder = This->numberOfLayers;
 			break;
 		}
 	}
 	else {
-		//ç≈èIëwÇ©ÇÁãtì`î¿
+		//ç≈èIëwÇ©ÇÁãtì`îd
 		targetLayerOrder = This->numberOfLayers;
 	}
 	//---------------------------------------------------------------------------------
-	//ãtì`î¿
+	//ãtì`îd
 	//---------------------------------------------------------------------------------
 #if 1
 	do {
@@ -1093,7 +1094,7 @@ SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
 		propagationInfo.pInputBuffer = This->pInputBuffer;
 		propagationInfo.pOutputBuffer = This->pOutputBuffer;
 		//---------------------------------------------------------------------------------
-		//äeëwÇÃãtì`î¿
+		//äeëwÇÃãtì`îd
 		//---------------------------------------------------------------------------------
 		fStatus = NeuralNetLayer_backward(This->pLayerArray[layerIndex], &propagationInfo);
 		if (fStatus == FALSE) {
@@ -1107,6 +1108,7 @@ SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
 		This->pOutputBuffer = pNextLayerOutput;
 	} while (--targetLayerOrder > 0); 
 #else
+	uint32_t j;
 	do {
 		for (j = 0; j < This->numberOfLayers; j++) {
 			uint32_t layerOrder;
@@ -1130,7 +1132,7 @@ SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
 			propagationInfo.pInputBuffer = This->pInputBuffer;
 			propagationInfo.pOutputBuffer = This->pOutputBuffer;
 			//---------------------------------------------------------------------------------
-			//äeëwÇÃãtì`î¿
+			//äeëwÇÃãtì`îd
 			//---------------------------------------------------------------------------------
 			fStatus = NeuralNetLayer_backward(This->pLayerArray[layerIndex], &propagationInfo);
 			if (fStatus == FALSE) {
@@ -1153,7 +1155,7 @@ SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
 }
 
 //=====================================================================================
-//  åÎç∑ãtì`î¿ÇÃç€ÇÃç≈èIëwÅiëÊàÍëwÅjÇ©ÇÁÇÃî˜ï™ëπé∏ílÇéÊìæÅiï°êîÇÃÉGÉìÉWÉìÇòAåãÇ∑ÇÈç€Ç…óòópÅj
+//  åÎç∑ãtì`îdÇÃç€ÇÃç≈èIëwÅiëÊàÍëwÅjÇ©ÇÁÇÃî˜ï™ëπé∏ílÇéÊìæÅiï°êîÇÃÉGÉìÉWÉìÇòAåãÇ∑ÇÈç€Ç…óòópÅj
 //=====================================================================================
 bool_t
 SequentialNet_getFinalDeltaLoss(handle_t hModel, flt32_t* pLoss, uint32_t arraySize) {
@@ -1189,7 +1191,7 @@ SequentialNet_getFinalDeltaLoss(handle_t hModel, flt32_t* pLoss, uint32_t arrayS
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//ÉoÇ∑Ç◊ÇƒÇÃëwÇ≈ãtì`î¿ÇµÇƒÇ¢Ç»Ç¢èÍçáÇÕÉGÉâÅ[
+	//ÉoÇ∑Ç◊ÇƒÇÃëwÇ≈ãtì`îdÇµÇƒÇ¢Ç»Ç¢èÍçáÇÕÉGÉâÅ[
 	//---------------------------------------------------------------------------------
 	if (This->backPropagationEndLayerIndex != 0) {
 		return FALSE;
@@ -1201,7 +1203,7 @@ SequentialNet_getFinalDeltaLoss(handle_t hModel, flt32_t* pLoss, uint32_t arrayS
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//èoóÕílÅiç≈èIãtì`î¿ílÅjÇÉZÉbÉg
+	//èoóÕílÅiç≈èIãtì`îdílÅjÇÉZÉbÉg
 	//---------------------------------------------------------------------------------
 	for (i = 0; i < inputDim; i++) {
 		pLoss[i] = This->pOutputBuffer[i];
@@ -1386,6 +1388,14 @@ SequentialNet_appendResidualConnectionSender(uint32_t* pBuffer, uint32_t sizeOfB
 bool_t
 SequentialNet_appendResidualConnectionReceiver(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t* pSizeOfLayerIn32BitWord) {
 	return 	NeuralNetLayerResidualConnectionReceiver_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, pSizeOfLayerIn32BitWord);
+}
+
+//=====================================================================================
+//  NeuralNetLayerSelfAttentionëwçÏê¨
+//=====================================================================================
+bool_t
+SequentialNet_appendSelfAttention(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, SelfAttentionMode mode, uint32_t num_heads, uint32_t dim_k,uint32_t dim_v,uint32_t* pSizeOfLayerIn32BitWord) {
+	return 	NeuralNetLayerSelfAttention_constructLayerData(pBuffer, sizeOfBufferIn32BitWord, pInputHeight, pInputWidth, pInputChannel, mode, num_heads, dim_k, dim_v, pSizeOfLayerIn32BitWord);
 }
 
 //=====================================================================================
