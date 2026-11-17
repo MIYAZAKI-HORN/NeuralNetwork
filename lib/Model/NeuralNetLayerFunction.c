@@ -554,7 +554,7 @@ weight_matrix_with_bias_backward(flt32_t* pInputBuffer, uint32_t inputDim, flt32
 		pDLossArray = pOutputBuffer;	//dL/dY
 		while (i--) {
 			deltaLoss = *pDLossArray++;
-			pInputValue = pInputX;		//順伝搬入力
+			pInputValue = pInputX;		//順伝播入力
 			j = inputDim;
 			while (j--) {
 				*pDeltaWeightMatrix++ += (*pInputValue++) * deltaLoss;
@@ -575,17 +575,230 @@ weight_matrix_with_bias_backward(flt32_t* pInputBuffer, uint32_t inputDim, flt32
 	// dY/dX
 	//-------------------------------------------
 	if (pInputBuffer != NULL) {
-		//逆伝搬する微分値の計算：累積
+		//逆伝播する微分値の計算：累積
 		i = outputDim;
 		pDLossArray = pOutputBuffer;	//dL/dY
 		while (i--) {
 			deltaLoss = *pDLossArray++;
-			pInputDelta = pInputBuffer;	//逆伝搬微分値
+			pInputDelta = pInputBuffer;	//逆伝播微分値
 			j = inputDim;
 			while (j--) {
 				*pInputDelta++ += (*pWeightMatrix++) * deltaLoss;
 			}
 		}
+	}
+}
+
+//=====================================================================================
+//  Matrix Multiplication
+//	行列の積: C = A * B (A: M x K, B: K x N -> C: M x N)
+//=====================================================================================
+//順伝播
+void 
+matmul_forward(const flt32_t* pA, const flt32_t* pB, flt32_t* pC, uint32_t M, uint32_t K, uint32_t N) {
+	//Aの各行とBの各列を乗算
+	flt32_t* pCHead = pC;
+	const flt32_t* pARowHead = pA;
+	uint32_t i = M;
+	while (i--) {
+		const flt32_t* pBColumnHead = pB;
+		uint32_t j = N;
+		while (j--) {
+			const flt32_t* pAColumn = pARowHead;
+			const flt32_t* pBCor = pBColumnHead;
+			flt32_t sum = 0.0f;
+			uint32_t k = K;
+			while (k--) {
+				sum += (*pAColumn) * (*pBCor);
+				pAColumn++;   //pARowHeadで示す行の列要素
+				pBCor += N; //pBColumnHeadで示す列の行要素
+			}
+			*pCHead++ = sum;
+			pBColumnHead++;   //次の列
+		}
+		pARowHead += K; //次の行
+	}
+}
+
+//逆伝播
+void 
+matmul_backward(const flt32_t* pA, const flt32_t* pB, const flt32_t* pLossC, flt32_t* pDeltaA, flt32_t* pDeltaB, uint32_t M, uint32_t K, uint32_t N) {
+	//Aの微分
+	if (pDeltaA != NULL) {
+		const flt32_t* pLossCHead = pLossC;
+		flt32_t* pDeltaARowHead = pDeltaA;
+		uint32_t i = M;
+		while (i--) {
+			const flt32_t* pBColumnHead = pB;
+			uint32_t j = N;
+			while (j--) {
+				flt32_t* pDeltaAColumn = pDeltaARowHead;
+				const flt32_t* pBCor = pBColumnHead;
+				uint32_t k = K;
+				flt32_t deltaLoss = *pLossCHead++;
+				while (k--) {
+					*pDeltaAColumn += (*pBCor) * deltaLoss;
+					pDeltaAColumn++;   //pARowHeadで示す行の列要素
+					pBCor += N; //pBColumnHeadで示す列の行要素
+				}
+				pBColumnHead++;   //次の列
+			}
+			pDeltaARowHead += K; //次の行
+		}
+	}
+	//Bの微分
+	if (pDeltaB != NULL) {
+		const flt32_t* pLossCHead = pLossC;
+		const flt32_t* pARowHead = pA;
+		uint32_t i = M;
+		while (i--) {
+			flt32_t* pDeltaBColumnHead = pDeltaB;
+			uint32_t j = N;
+			while (j--) {
+				const flt32_t* pAColumn = pARowHead;
+				flt32_t* pBDeltaCor = pDeltaBColumnHead;
+				flt32_t deltaLoss = *pLossCHead++;
+				uint32_t k = K;
+				while (k--) {
+					*pBDeltaCor += (*pAColumn) * deltaLoss;
+					pAColumn++;			//pARowHeadで示す行の列要素
+					pBDeltaCor += N;	//pBColumnHeadで示す列の行要素
+				}
+				pDeltaBColumnHead++;   //次の列
+			}
+			pARowHead += K; //次の行
+		}
+	}
+}
+
+//=====================================================================================
+//  Matrix Multiplication Transposed
+//	Bの転置行列との積: C = A * B^T (A: M x K, B: N x K -> C: M x N)
+//=====================================================================================
+//順伝播
+void 
+matmul_transposed_forward(const flt32_t* pA, const flt32_t* pB, flt32_t* pC, uint32_t M, uint32_t K, uint32_t N) {
+	//transposeなのでAの各行とBの各行を乗算
+	flt32_t* pCHead = pC;
+	const flt32_t* pARowHead = pA;
+	uint32_t i = M;
+	while (i--) {
+		const flt32_t* pBRow = pB; //transposeでColumnになる
+		uint32_t j = N;
+		while (j--) {
+			const flt32_t* pAColumn = pARowHead;// A + i * K;
+			flt32_t sum = 0.0f;
+			uint32_t k = K;
+			while (k--) {
+				sum += (*pAColumn) * (*pBRow);
+				pAColumn++;		//pARowHeadで示す行の列要素
+				pBRow++;		//pBRowの行要素
+			}
+			*pCHead++ = sum;
+		}
+		pARowHead += K;
+	}
+}
+
+//逆伝播
+void 
+matmul_transposed_backward(const flt32_t* pA, const flt32_t* pB, const flt32_t* pLossC, flt32_t* pDeltaA, flt32_t* pDeltaB, uint32_t M, uint32_t K, uint32_t N) {
+	//transposeなのでAの各行とBの各行を乗算
+	//Aの微分
+	if (pDeltaA != NULL) {
+		const flt32_t* pLossCHead = pLossC;
+		flt32_t* pDeltaARowHead = pDeltaA;
+		uint32_t i = M;
+		while (i--) {
+			const flt32_t* pBRow = pB; //transposeでColumnになる
+			uint32_t j = N;
+			while (j--) {
+				flt32_t* pDeltaAColumn = pDeltaARowHead;
+				uint32_t k = K;
+				flt32_t deltaLoss = *pLossCHead++;
+				while (k--) {
+					*pDeltaAColumn += (*pBRow) * deltaLoss;
+					pDeltaAColumn++;	//pARowHeadで示す行の列要素
+					pBRow++;			//pBRowの行要素
+				}
+			}
+			pDeltaARowHead += K;
+		}
+	}
+	//Bの微分
+	if (pDeltaB != NULL) {
+		const flt32_t* pLossCHead = pLossC;
+		const flt32_t* pARowHead = pA;
+		uint32_t i = M;
+		while (i--) {
+			flt32_t* pDeltaBRow = pDeltaB; //transposeでColumnになる
+			uint32_t j = N;
+			while (j--) {
+				const flt32_t* pAColumn = pARowHead;
+				uint32_t k = K;
+				flt32_t deltaLoss = *pLossCHead++;
+				while (k--) {
+					*pDeltaBRow += (*pAColumn) * deltaLoss;
+					pAColumn++;			//pARowHeadで示す行の列要素
+					pDeltaBRow++;		//pBRowの行要素
+				}
+			}
+			pARowHead += K;
+		}
+	}
+}
+
+//=====================================================================================
+//  global average pooling 2D
+//=====================================================================================
+//純伝搬
+void 
+global_average_pooling2D_forward(const flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t inHeight, uint32_t inWidth, uint32_t inChannel) {
+	//------------------------------------------------------------------------------------------
+	//平均値プーリング
+	//------------------------------------------------------------------------------------------
+	uint32_t		inPixels = inHeight * inWidth;
+	flt32_t			normalizationFactor = 1.0f / (flt32_t)inPixels;
+	const flt32_t*	pChannelInput = pInputBuffer;
+	flt32_t*		pOutput = pOutputBuffer;
+	uint32_t		iC = inChannel;
+	while (iC--) {
+		//チャネルごとの平均値を計算
+		flt32_t			averageValue = 0.0f;
+		const flt32_t*	pInput = pChannelInput;	//入力バッファ(チャンネル先頭)
+		uint32_t		iP = inPixels;
+		while (iP--) {
+			averageValue += *pInput;
+			pInput += inChannel;	//次のチャネルデータへ移動
+		}
+		//平均値係数を乗算する
+		averageValue *= normalizationFactor;
+		*pOutput++ = averageValue;
+		pChannelInput++;
+	}
+
+}
+
+//逆伝播
+void 
+global_average_pooling2D_backward(flt32_t* pInputBuffer, const flt32_t* pOutputBuffer, uint32_t inHeight, uint32_t inWidth, uint32_t inChannel) {
+	//------------------------------------------------------------------------------------------
+	//平均値プーリング
+	//------------------------------------------------------------------------------------------
+	uint32_t		inPixels = inHeight * inWidth;
+	flt32_t			normalizationFactor = 1.0f / (flt32_t)inPixels;
+	const flt32_t*	pDLossArray = pOutputBuffer;
+	flt32_t*		pChannelInput = pInputBuffer;
+	uint32_t		iC = inChannel;
+	while (iC--) {
+		flt32_t*	pInput = pChannelInput;	//入力バッファ(チャンネル先頭)
+		uint32_t	iP = inPixels;
+		flt32_t		loss = (*pDLossArray++) * normalizationFactor;
+		while (iP--) {
+			*pInput += loss;
+			pInput += inChannel;	//次のチャネルデータへ移動
+		}
+		pChannelInput++;
 	}
 }
 
@@ -735,9 +948,18 @@ softmax_forward(flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t dim) {
 
 void
 softmax_backward(flt32_t* pY, flt32_t* pLoss, flt32_t* pInput, uint32_t dim) {
-	while (dim--) {
-		*pInput++ = (*pLoss++) * (*pY) * (1.0f - (*pY));
-		pY++;
+	flt32_t		dot = 0.0f;
+	flt32_t*	pYH = pY;
+	flt32_t*	pLH = pLoss;
+	uint32_t	i = dim;
+	while (i--) {
+		dot += (*pYH++) * (*pLH++);
+	}
+	pYH = pY;
+	pLH = pLoss;
+	i = dim;
+	while (i--) {
+		*pInput++ = (*pYH++) * ((*pLH++) - dot);
 	}
 }
 
@@ -755,9 +977,9 @@ flt32_t low_cost_sqrt(const flt32_t x, uint32_t iterlations)
 	return (xRes * x);
 }
 
-//-------------------------------------------------------------------------
+//=====================================================================================
 //初期値取得
-//-------------------------------------------------------------------------
+//=====================================================================================
 void
 set_random_initial_values(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, flt32_t factor) {
 	uint32_t	i;
@@ -769,9 +991,9 @@ set_random_initial_values(handle_t hRandomValueGenerator, flt32_t* pParameterArr
 	}
 }
 
-//-------------------------------------------------------------------------
+//=====================================================================================
 //初期値設定:sqrt normalization
-//-------------------------------------------------------------------------
+//=====================================================================================
 void
 set_random_initial_values_by_sqrt(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, uint32_t normSize) {
 	uint32_t	i;
@@ -786,11 +1008,11 @@ set_random_initial_values_by_sqrt(handle_t hRandomValueGenerator, flt32_t* pPara
 	}
 }
 
-//-------------------------------------------------------------------------
+//=====================================================================================
 //初期値設定:Heの初期化（Kaiming Initialization）
 //ReLU関数やLeakyReLU関数を利用する場合のデファクトスタンダード σ=√(2/parameter size)
 //parameter size:重みに掛け合わされるパメタサイズ(fan-in)
-//-------------------------------------------------------------------------
+//=====================================================================================
 void
 set_random_initial_values_by_he(handle_t hRandomValueGenerator, flt32_t* pParameterArray, uint32_t arraySize, uint32_t normSize) {
 	uint32_t	i,j;
@@ -822,9 +1044,9 @@ set_random_initial_values_by_he(handle_t hRandomValueGenerator, flt32_t* pParame
 	}
 }
 
-//-------------------------------------------------------------------------
+//=====================================================================================
 //初期値設定:constant value
-//-------------------------------------------------------------------------
+//=====================================================================================
 void
 set_constant_initial_values(flt32_t* pParameterArray, uint32_t arraySize, flt32_t value) {
 	uint32_t   i;
@@ -836,3 +1058,77 @@ set_constant_initial_values(flt32_t* pParameterArray, uint32_t arraySize, flt32_
 	}
 }
 
+//=====================================================================================
+// 浮動小数点配列値のコピー
+//=====================================================================================
+void
+mem_copy_flt(flt32_t* pDest, const flt32_t* pSource, uint32_t arraySize) {
+	flt32_t* pD = pDest;
+	const flt32_t* pS = pSource;
+	int i = arraySize;
+	while (i--) {
+		*pD++ = *pS++;
+	}
+}
+
+//=====================================================================================
+// 同一浮動小数点数値を配列にセットする
+//=====================================================================================
+void
+mem_set_flt(flt32_t* pX, flt32_t value, uint32_t arraySize) {
+	uint32_t i = arraySize;
+	while (i--) {
+		*pX++ = value;
+	}
+}
+
+//=====================================================================================
+// 同一浮動小数点数値を配列に乗算する
+//=====================================================================================
+void
+mem_multiply_flt(flt32_t* pX, flt32_t value, uint32_t arraySize) {
+	uint32_t i = arraySize;
+	while (i--) {
+		*pX++ *= value;
+	}
+}
+
+//=====================================================================================
+//  C x H x W → H x W x Cに変換
+//=====================================================================================
+void
+channel_first_2_last(const flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t inHeight, uint32_t inWidth, uint32_t inChannel) {
+	const flt32_t* pCFirst_i = pInputBuffer;	//入力がChannel first
+	flt32_t* pCLast = pOutputBuffer;			//出力がChannel last
+	uint32_t nPixels = inHeight * inWidth;
+	uint32_t i = nPixels;
+	while (i--) {
+		const flt32_t* pCFirst = pCFirst_i;
+		uint32_t j = inChannel;
+		while (j--) {
+			*pCLast++ = *pCFirst;
+			pCFirst += nPixels;
+		}
+		pCFirst_i++;
+	}
+}
+
+//=====================================================================================
+//　H x W x C  → C x H x Wに変換
+//=====================================================================================
+void
+channel_last_2_first(const flt32_t* pInputBuffer, flt32_t* pOutputBuffer, uint32_t inHeight, uint32_t inWidth, uint32_t inChannel) {
+	const flt32_t* pCLast = pInputBuffer;		//入力がChannel last
+	flt32_t* pCFirst_i = pOutputBuffer;			//出力がChannel first
+	uint32_t nPixels = inHeight * inWidth;
+	uint32_t i = nPixels;
+	while (i--) {
+		flt32_t* pCFirst = pCFirst_i;
+		uint32_t j = inChannel;
+		while (j--) {
+			*pCFirst = *pCLast++;	//channel_first_2_lastの入れ替え
+			pCFirst += nPixels;
+		}
+		pCFirst_i++;
+	}
+}
