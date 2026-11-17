@@ -16,6 +16,8 @@ SOURCE	:= 	./Model/NeuralNetLayer.c		\
 		./Model/NeuralNetLayerPreDeconv2D.c	\
 		./Model/NeuralNetLayerResidualConnection.c	\
 		./Model/NeuralNetLayerSimpleRNN.c	\
+		./Model/NeuralNetAttentionModule.c	\
+		./Model/NeuralNetLayerSelfAttention.c	\
 		./Model/NeuralNetOptimizer.c	\
 		./Model/NeuralNetLayerType.c	\
 		./Model/RandomValueGenerator.c	\
@@ -36,6 +38,8 @@ OBJS	:= 	./NeuralNetLayer.o		\
 		./NeuralNetLayerPreDeconv2D.o	\
 		./NeuralNetLayerResidualConnection.o	\
 		./NeuralNetLayerSimpleRNN.o	\
+		./NeuralNetAttentionModule.o	\
+		./NeuralNetLayerSelfAttention.o	\
 		./NeuralNetOptimizer.o	\
 		./NeuralNetLayerType.o	\
 		./RandomValueGenerator.o	\
