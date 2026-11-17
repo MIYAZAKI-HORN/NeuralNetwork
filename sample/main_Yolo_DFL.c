@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
 	pf_trainData = fopen(trainDataFileName, "rb");
 	if (pf_trainData == NULL) {
 		printf("file open error : %s\n", trainDataFileName);
-		return FALSE;
+		return 1;
 	}
 	sprintf(strInformation, "train data file : %s\n", trainDataFileName);
 	SAVE_LOG_WITHOUT_RETURN(strInformation);
