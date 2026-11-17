@@ -8,6 +8,7 @@ extern "C" {
 #include "STDTypeDefinition.h"
 #include "NeuralNetOptimizer.h"
 #include "NeuralNetLayerActivation.h"
+#include "NeuralNetLayerSelfAttention.h"
 
 //=====================================================================================
 //  外部関数呼び出し定義
@@ -37,7 +38,7 @@ uint32_t	SequentialNet_getSizeIn32BitWord(uint32_t* pModelData, bool_t fEnableLe
 //-------------------------------------------------------------------------
 handle_t	SequentialNet_construct(uint32_t* pModelData, bool_t fEnableLearning, uint32_t batchSize, NeuralNetOptimizerType optimizer, uint32_t numberOfBackPropagationLayers, uint32_t* pWorkArea, uint32_t sizeOfWorkAreaIn32BitWord);
 //-------------------------------------------------------------------------
-// 計算実効
+// 予測計算実効
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_predict(handle_t hModel, flt32_t* pInputData, uint32_t inputDataArraySize);
 //-------------------------------------------------------------------------
@@ -73,19 +74,19 @@ bool_t		SequentialNet_initializeParameter(handle_t hModel);
 //-------------------------------------------------------------------------
 handle_t	SequentialNet_getOptimizer(handle_t hModel, uint32_t layerIndex);
 //-------------------------------------------------------------------------
-// 学習（誤差逆伝搬）時に最終層のsoftmaxをスキップするか否かの設定を行う
+// 学習（誤差逆伝播）時に最終層のsoftmaxをスキップするか否かの設定を行う
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_skipLastSoftmaxWhenBackpropagation(handle_t hModel, bool_t fSkip);
 //-------------------------------------------------------------------------
-// 学習（誤差逆伝搬）
+// 学習（誤差逆伝播）
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_fit(handle_t hModel, flt32_t* pLoss, uint32_t arraySize);
 //-------------------------------------------------------------------------
-//  誤差逆伝搬の際の最終層（第一層）からの微分損失値を取得（複数のエンジンを連結する際に利用）
+//  誤差逆伝播の際の最終層（第一層）からの微分損失値を取得（複数のエンジンを連結する際に利用）
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_getFinalDeltaLoss(handle_t hModel, flt32_t* pLoss, uint32_t arraySize);
 //-------------------------------------------------------------------------
-//  外部予備橋関数のセット
+//  外部関数のセット
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_setExternalFunctions(handle_t hModel, SequentialNet_ExternalFuncTable* pExternalFuncTable);
 //-------------------------------------------------------------------------
@@ -148,6 +149,10 @@ bool_t		SequentialNet_appendResidualConnectionSender(uint32_t* pBuffer, uint32_t
 //  NeuralNetLayerResidualConnectionReceiver層作成
 //-------------------------------------------------------------------------
 bool_t		SequentialNet_appendResidualConnectionReceiver(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, uint32_t* pSizeOfLayerIn32BitWord);
+//-------------------------------------------------------------------------
+//  NeuralNetLayerSelfAttention層作成
+//-------------------------------------------------------------------------
+bool_t		SequentialNet_appendSelfAttention(uint32_t* pBuffer, uint32_t sizeOfBufferIn32BitWord, uint32_t* pInputHeight, uint32_t* pInputWidth, uint32_t* pInputChannel, SelfAttentionMode mode, uint32_t num_heads, uint32_t dim_k, uint32_t dim_v, uint32_t* pSizeOfLayerIn32BitWord);
 //-------------------------------------------------------------------------
 //  モデルの先頭から指定された層分のモデルを抽出する
 //-------------------------------------------------------------------------
