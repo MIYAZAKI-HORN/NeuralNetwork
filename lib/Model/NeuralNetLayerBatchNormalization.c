@@ -24,9 +24,9 @@ typedef struct tagBatchNormalizationNeuralNetHeader {
 //=====================================================================================
 typedef struct tagBatchNormalizationNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pX;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@Fx
-	flt32_t*		pSumOfX;		//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@FxÏŽZ
-	flt32_t*		pSumOfVar;		//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@F(x - mean) * (x - mean)ÏŽZ
+	flt32_t*		pX;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@Fx
+	flt32_t*		pSumOfX;		//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@FxÏŽZ
+	flt32_t*		pSumOfVar;		//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@F(x - mean) * (x - mean)ÏŽZ
 	flt32_t			momentum;		//ˆÚ“®•½‹Ïƒpƒ‰ƒƒ^
 	uint32_t		accumulation;	//ÏŽZ‰ñ”
 	handle_t		hOptimizer;		//ƒIƒvƒeƒBƒ}ƒCƒU[ƒnƒ“ƒhƒ‹
@@ -54,7 +54,7 @@ NeuralNetLayerBatchNormalization_getShape(handle_t hLayer, DataShape* pInputShap
 }
 
 //=====================================================================================
-//  ‡“`”ÀŒvŽZ
+//  ‡“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -86,7 +86,7 @@ NeuralNetLayerBatchNormalization_forward_calculation(
 	flt32_t*	pSumOfVarHead;
 	i = size;
 	while (i--) {
-		//‡“`”Àƒf[ƒ^
+		//‡“`”dƒf[ƒ^
 		pGammaHead = pGamma;
 		pBetaHead = pBeta;
 		pMeanHead = pMean;
@@ -102,10 +102,10 @@ NeuralNetLayerBatchNormalization_forward_calculation(
 			mean = *pMeanHead++;
 			invStd = *pInvStdHead++;
 			X = (x - mean) * invStd;	//³‹K‰»
-			//‡“`”Ào—Í
+			//‡“`”do—Í
 			y = gamma * X + beta;
 			*pOutputBuffer++ = y;
-			//‹t“`”À—p•ÛŽ
+			//‹t“`”d—p•ÛŽ
 			if (pX != NULL) {
 				*pX++ = X;				//gamma‚Ì”÷•ª’l‚Æ‚Æ‚µ‚Ä•ÛŽFy = gamma * X + beta
 				*pSumOfXHead++ += x;	//“ü—Í‚Ì•½‹Ï’l
@@ -117,7 +117,7 @@ NeuralNetLayerBatchNormalization_forward_calculation(
 }
 
 //=====================================================================================
-//  ‹t“`”ÀŒvŽZ
+//  ‹t“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -140,7 +140,7 @@ NeuralNetLayerBatchNormalization_backward_calculation(
 	flt32_t* pDB;
 	flt32_t* pDLossArray;
 	//---------------------------------------------------------------------------------
-	//ƒpƒ‰ƒƒ^‚ÌŒë·‹t“`”À
+	//ƒpƒ‰ƒƒ^‚ÌŒë·‹t“`”d
 	//---------------------------------------------------------------------------------
 	pDLossArray = pOutputBuffer;
 	pInput = pInputBuffer;
@@ -155,7 +155,7 @@ NeuralNetLayerBatchNormalization_backward_calculation(
 			//ƒpƒ‰ƒƒ^”÷•ª’l
 			*pDG++ += (*pX++) * (*pDLossArray);
 			*pDB++ += (*pDLossArray);
-			//‹t“`”À
+			//‹t“`”d
 			*pInput++ += (*pGammaHead++) * (*pInvStdHead++) * (*pDLossArray);
 			//‹t“`“ü—Í’l“`”ÀŒë·”÷•ª’lƒ|ƒCƒ“ƒ^XV
 			pDLossArray++;
@@ -165,7 +165,7 @@ NeuralNetLayerBatchNormalization_backward_calculation(
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 static
 bool_t
@@ -264,7 +264,7 @@ NeuralNetLayerBatchNormalization_forward(handle_t hLayer, PropagationInfo* pProp
 	//---------------------------------------------------------------------------------
 	NeuralNetLayerBatchNormalization_forward_calculation(size,unit,pGamma,pBeta,pMean,pInvStd,pX,pSumOfX,pSumOfVar,pPropagationInfo->pInputBuffer,pPropagationInfo->pOutputBuffer);
 	if (pX != NULL) {
-		//‹t“`”À—pÏŽZ‰ñ”
+		//‹t“`”d—pÏŽZ‰ñ”
 		pBatchNormalizationLayer->accumulation += size;
 	}
 	//---------------------------------------------------------------------------------
@@ -275,7 +275,7 @@ NeuralNetLayerBatchNormalization_forward(handle_t hLayer, PropagationInfo* pProp
 }
 
 //=====================================================================================
-//  ‹t“`”ÀŒvŽZ
+//  ‹t“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -300,7 +300,7 @@ NeuralNetLayerBatchNormalization_backward(handle_t hLayer,PropagationInfo* pProp
 	uint32_t	inChannel;
 	OptimizerFunctionTable optimizerFunctionTable;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -361,7 +361,7 @@ NeuralNetLayerBatchNormalization_backward(handle_t hLayer,PropagationInfo* pProp
 		unit = pBatchNormalizationNeuralNetHeader->unit;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”ÀŒvŽZ
+	//‹t“`”dŒvŽZ
 	//---------------------------------------------------------------------------------
 	NeuralNetLayerBatchNormalization_backward_calculation(size,unit,pGamma, pInvStd, pBatchNormalizationLayer->pX,pDGamma,pDBeta,pPropagationInfo->pInputBuffer,pPropagationInfo->pOutputBuffer);
 	//---------------------------------------------------------------------------------
@@ -654,7 +654,6 @@ bool_t
 NeuralNetLayerBatchNormalization_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	BatchNormalizationNeuralNetHeader* pBatchNormalizationNeuralNetHeader = (BatchNormalizationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pBatchNormalizationNeuralNetHeader;
 	if (pBatchNormalizationNeuralNetHeader == NULL) {
 		return FALSE;
 	}

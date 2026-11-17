@@ -20,7 +20,7 @@ typedef struct tagMaxPooling2DNeuralNetHeader {
 //=====================================================================================
 typedef struct tagMaxPooling2DNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	uint32_t*		pMaxValueIndex;	//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	uint32_t*		pMaxValueIndex;	//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 } MaxPooling2DNeuralNetLayer;
 
 //=====================================================================================
@@ -119,7 +119,7 @@ NeuralNetLayerMaxPooling2D_getShape(handle_t hLayer, DataShape* pInputShape, Dat
 }
 
 //=====================================================================================
-//  MaxPooling‘w@‡“`”À
+//  MaxPooling‘w@‡“`”d
 //=====================================================================================
 bool_t
 NeuralNetLayerMaxPooling2D_forward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
@@ -282,7 +282,7 @@ NeuralNetLayerMaxPooling2D_forward(handle_t hLayer, PropagationInfo* pPropagatio
 }
 
 //=====================================================================================
-//  ‹t“`”À
+//  ‹t“`”d
 //=====================================================================================
 bool_t
 NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
@@ -311,7 +311,7 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 	uint32_t	outDataCounter;
 	flt32_t*	pInput;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -378,7 +378,7 @@ NeuralNetLayerMaxPooling2D_backward(handle_t hLayer, PropagationInfo* pPropagati
 		}
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”À‚Ì“ü—Íƒf[ƒ^Œ`ó)
+	//‹t“`”do—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”d‚Ì“ü—Íƒf[ƒ^Œ`ó)
 	//---------------------------------------------------------------------------------
 	DataShape_construct(&pPropagationInfo->dataShape, inHeight, inWidth, inChannel);
 	return TRUE;
@@ -486,7 +486,6 @@ bool_t
 NeuralNetLayerMaxPooling2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	MaxPooling2DNeuralNetHeader* pMaxPooling2DNeuralNetHeader = (MaxPooling2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pMaxPooling2DNeuralNetHeader;
 	if (pMaxPooling2DNeuralNetHeader == NULL) {
 		return FALSE;
 	}

@@ -18,7 +18,7 @@ typedef struct tagPointwiseConv2DNeuralNetHeader {
 //=====================================================================================
 typedef struct tagPointwiseConv2DNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pX;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	flt32_t*		pX;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 	handle_t		hOptimizer;		//ƒIƒvƒeƒBƒ}ƒCƒU[ƒnƒ“ƒhƒ‹
 } PointwiseConv2DNeuralNetLayer;
 
@@ -76,7 +76,7 @@ NeuralNetLayerPointwiseConv2D_getLayerParameter(PointwiseConv2DNeuralNetHeader* 
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 static
 bool_t
@@ -162,7 +162,7 @@ NeuralNetLayerPointwiseConv2D_forward(handle_t hLayer, PropagationInfo* pPropaga
 }
 
 //=====================================================================================
-//  ‹t“`”À
+//  ‹t“`”d
 //=====================================================================================
 static
 bool_t
@@ -193,7 +193,7 @@ NeuralNetLayerPointwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 	flt32_t*	pXData;		//“ü—Í’l
 	OptimizerFunctionTable optimizerFunctionTable;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -229,7 +229,7 @@ NeuralNetLayerPointwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 		*pInputData++ = 0.0f;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”À
+	//‹t“`”d
 	//---------------------------------------------------------------------------------
 	pXArray = pPointwiseConv2DLayer->pX;
 	pInputArray = pPropagationInfo->pInputBuffer;
@@ -250,7 +250,7 @@ NeuralNetLayerPointwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 			//----------------------------------------------------------
 			deltaLoss = *pDLossArray++;
 			//----------------------------------------------------------
-			//‡“`”ÀŽž‚ÌƒtƒBƒ‹ƒ^[ƒuƒƒbƒN‚Ö‚Ì“ü—Í‚ÆA‹t“`”À”÷•ª
+			//‡“`”dŽž‚ÌƒtƒBƒ‹ƒ^[ƒuƒƒbƒN‚Ö‚Ì“ü—Í‚ÆA‹t“`”d”÷•ª
 			//----------------------------------------------------------
 			pXData = pXArray;
 			pInputData = pInputArray;
@@ -268,7 +268,7 @@ NeuralNetLayerPointwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 				//----------------------------------------------------------
 				*pDFilterHead++ += (*pXData++) * deltaLoss;
 				//----------------------------------------------------------
-				//‹t“`”Ào—Í‚ÖÏŽZ
+				//‹t“`”do—Í‚ÖÏŽZ
 				//----------------------------------------------------------
 				*pInputData++ += (*pFilterHead++) * deltaLoss;
 			}
@@ -278,7 +278,7 @@ NeuralNetLayerPointwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 		pInputArray += inChannel;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”À‚Ì“ü—Íƒf[ƒ^Œ`ó)
+	//‹t“`”do—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”d‚Ì“ü—Íƒf[ƒ^Œ`ó)
 	//---------------------------------------------------------------------------------
 	DataShape_construct(&pPropagationInfo->dataShape, inHeight, inWidth, inChannel);
 	return TRUE;
@@ -445,7 +445,6 @@ bool_t
 NeuralNetLayerPointwiseConv2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	PointwiseConv2DNeuralNetHeader* pPointwiseConv2DNeuralNetHeader = (PointwiseConv2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pPointwiseConv2DNeuralNetHeader;
 	if (pPointwiseConv2DNeuralNetHeader == NULL) {
 		return FALSE;
 	}

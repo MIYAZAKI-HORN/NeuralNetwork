@@ -72,7 +72,7 @@ NeuralNetLayerResidualConnectionSender_getShape(handle_t hLayer, DataShape* pInp
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 static
 bool_t
@@ -85,6 +85,7 @@ NeuralNetLayerResidualConnectionSender_forward(handle_t hLayer, PropagationInfo*
 	uint32_t	inWidth;
 	uint32_t	inChannel;
 	uint32_t	inputDataDim;
+	uint32_t	dataDim;
 	flt32_t*	pLoss;
 	flt32_t*	pInputData;
 	flt32_t*	pOutputData;
@@ -99,12 +100,11 @@ NeuralNetLayerResidualConnectionSender_forward(handle_t hLayer, PropagationInfo*
 	inWidth = pNeuralNetHeader->inWidth;
 	inChannel = pNeuralNetHeader->inChannel;
 	inputDataDim = inHeight * inWidth * inChannel;
+	dataDim = DataShape_getSize(&pPropagationInfo->dataShape);
 	//---------------------------------------------------------------------------------
-	//“ü—ÍŽŸŒ³ƒ`ƒFƒbƒN
+	//ŽŸŒ³ƒ`ƒFƒbƒN
 	//---------------------------------------------------------------------------------
-	if ((pPropagationInfo->dataShape.height != inHeight) ||
-		(pPropagationInfo->dataShape.width != inWidth) ||
-		(pPropagationInfo->dataShape.channel != inChannel)) {
+	if (dataDim != inputDataDim) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
@@ -116,7 +116,7 @@ NeuralNetLayerResidualConnectionSender_forward(handle_t hLayer, PropagationInfo*
 			return FALSE;
 		}
 		//-------------------------------------------------------
-		//‹t“`”À—p:‰Šú‰»‚µ‚Ä‚¨‚­
+		//‹t“`”d—p:‰Šú‰»‚µ‚Ä‚¨‚­
 		//-------------------------------------------------------
 		pLoss	= pResidualConnectionSenderLayer->pReceiverLoss;
 		size = inputDataDim;
@@ -157,7 +157,7 @@ NeuralNetLayerResidualConnectionSender_forward(handle_t hLayer, PropagationInfo*
 }
 
 //=====================================================================================
-//  ‹t“`”ÀŒvŽZ
+//  ‹t“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -175,8 +175,9 @@ NeuralNetLayerResidualConnectionSender_backward(handle_t hLayer,PropagationInfo*
 	uint32_t	inWidth;
 	uint32_t	inChannel;
 	uint32_t	inputDataDim;
+	uint32_t	dataDim;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -194,21 +195,20 @@ NeuralNetLayerResidualConnectionSender_backward(handle_t hLayer,PropagationInfo*
 	inWidth		= pNeuralNetHeader->inWidth;
 	inChannel	= pNeuralNetHeader->inChannel;
 	inputDataDim = inHeight * inWidth * inChannel;
+	dataDim = DataShape_getSize(&pPropagationInfo->dataShape);
 	//---------------------------------------------------------------------------------
 	//ŽŸŒ³ƒ`ƒFƒbƒN
 	//---------------------------------------------------------------------------------
-	if ((pPropagationInfo->dataShape.height != inHeight) ||
-		(pPropagationInfo->dataShape.width != inWidth) ||
-		(pPropagationInfo->dataShape.channel != inChannel)) {
+	if (dataDim != inputDataDim) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
 	//Œë·“`”Àæƒoƒbƒtƒ@[
 	//---------------------------------------------------------------------------------
-	size = inHeight * inWidth * inChannel;
 	pInputData = pPropagationInfo->pInputBuffer;
 	pLoss = pPropagationInfo->pOutputBuffer;
 	pReceiverLoss = pResidualConnectionSenderLayer->pReceiverLoss;
+	size = inputDataDim;
 	while (size--) {
 		*pInputData++ = (*pLoss++) + (*pReceiverLoss++);
 	}
@@ -253,6 +253,7 @@ NeuralNetLayerResidualConnectionSender_setBackwardData(handle_t hLayer, Propagat
 	uint32_t	inWidth;
 	uint32_t	inChannel;
 	uint32_t	inputDataDim;
+	uint32_t	dataDim;
 	//---------------------------------------------------------------------------------
 	//ŠwK‘ÎÛ‚Å‚È‚¢ê‡
 	//---------------------------------------------------------------------------------
@@ -272,12 +273,11 @@ NeuralNetLayerResidualConnectionSender_setBackwardData(handle_t hLayer, Propagat
 	inWidth = pNeuralNetHeader->inWidth;
 	inChannel = pNeuralNetHeader->inChannel;
 	inputDataDim = inHeight * inWidth * inChannel;
+	dataDim = DataShape_getSize(&pPropagationInfo->dataShape);
 	//---------------------------------------------------------------------------------
 	//ŽŸŒ³ƒ`ƒFƒbƒN
 	//---------------------------------------------------------------------------------
-	if ((pPropagationInfo->dataShape.height != inHeight) ||
-		(pPropagationInfo->dataShape.width != inWidth) ||
-		(pPropagationInfo->dataShape.channel != inChannel)) {
+	if (dataDim != inputDataDim) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
@@ -435,7 +435,6 @@ bool_t
 NeuralNetLayerResidualConnectionSender_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	ResidualConnectionSenderNeuralNetHeader* pResidualConnectionSenderNeuralNetHeader = (ResidualConnectionSenderNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pResidualConnectionSenderNeuralNetHeader;
 	if (pResidualConnectionSenderNeuralNetHeader == NULL) {
 		return FALSE;
 	}
@@ -636,7 +635,7 @@ NeuralNetLayerResidualConnectionReceiver_getShape(handle_t hLayer, DataShape* pI
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 static
 bool_t
@@ -649,6 +648,7 @@ NeuralNetLayerResidualConnectionReceiver_forward(handle_t hLayer, PropagationInf
 	uint32_t	inWidth;
 	uint32_t	inChannel;
 	uint32_t	inputDataDim;
+	uint32_t	dataDim;
 	flt32_t*	pInputData;
 	flt32_t*	pInputDataReceived;
 	flt32_t*	pOutputData;
@@ -660,12 +660,11 @@ NeuralNetLayerResidualConnectionReceiver_forward(handle_t hLayer, PropagationInf
 	inWidth = pNeuralNetHeader->inWidth;
 	inChannel = pNeuralNetHeader->inChannel;
 	inputDataDim = inHeight * inWidth * inChannel;
+	dataDim = DataShape_getSize(&pPropagationInfo->dataShape);
 	//---------------------------------------------------------------------------------
-	//“ü—ÍŽŸŒ³ƒ`ƒFƒbƒN
+	//ŽŸŒ³ƒ`ƒFƒbƒN
 	//---------------------------------------------------------------------------------
-	if ((pPropagationInfo->dataShape.height != inHeight) ||
-		(pPropagationInfo->dataShape.width != inWidth) ||
-		(pPropagationInfo->dataShape.channel != inChannel)) {
+	if (dataDim != inputDataDim) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
@@ -686,7 +685,7 @@ NeuralNetLayerResidualConnectionReceiver_forward(handle_t hLayer, PropagationInf
 }
 
 //=====================================================================================
-//  ‹t“`”ÀŒvŽZ
+//  ‹t“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -703,11 +702,12 @@ NeuralNetLayerResidualConnectionReceiver_backward(handle_t hLayer, PropagationIn
 	uint32_t	inWidth;
 	uint32_t	inChannel;
 	uint32_t	inputDataDim;
+	uint32_t	dataDim;
 	ResidualConnectionSenderInterface	senderInterface;
 	PropagationInfo	 propagationInfo;
 	bool_t	fStatus;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -719,12 +719,11 @@ NeuralNetLayerResidualConnectionReceiver_backward(handle_t hLayer, PropagationIn
 	inWidth = pNeuralNetHeader->inWidth;
 	inChannel = pNeuralNetHeader->inChannel;
 	inputDataDim = inHeight * inWidth * inChannel;
+	dataDim = DataShape_getSize(&pPropagationInfo->dataShape);
 	//---------------------------------------------------------------------------------
 	//ŽŸŒ³ƒ`ƒFƒbƒN
 	//---------------------------------------------------------------------------------
-	if ((pPropagationInfo->dataShape.height != inHeight) ||
-		(pPropagationInfo->dataShape.width != inWidth) ||
-		(pPropagationInfo->dataShape.channel != inChannel)) {
+	if (dataDim != inputDataDim) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
@@ -794,6 +793,7 @@ NeuralNetLayerResidualConnectionReceiver_setForwardData(handle_t hLayer, handle_
 	uint32_t		inWidth;
 	uint32_t		inChannel;
 	uint32_t		inputDataDim;
+	uint32_t		dataDim;
 	flt32_t*		pInputData;
 	flt32_t*		pX;
 	bool_t			fStatus;
@@ -845,12 +845,11 @@ NeuralNetLayerResidualConnectionReceiver_setForwardData(handle_t hLayer, handle_
 	inWidth = receiverInputShape.width;
 	inChannel = receiverInputShape.channel;
 	inputDataDim = inHeight * inWidth * inChannel;
+	dataDim = DataShape_getSize(&pPropagationInfo->dataShape);
 	//---------------------------------------------------------------------------------
 	//ŽŸŒ³ƒ`ƒFƒbƒN
 	//---------------------------------------------------------------------------------
-	if ((pPropagationInfo->dataShape.height != inHeight) ||
-		(pPropagationInfo->dataShape.width != inWidth) ||
-		(pPropagationInfo->dataShape.channel != inChannel)) {
+	if (dataDim != inputDataDim) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
@@ -949,7 +948,6 @@ bool_t
 NeuralNetLayerResidualConnectionReceiver_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	ResidualConnectionReceiverNeuralNetHeader* pResidualConnectionReceiverNeuralNetHeader = (ResidualConnectionReceiverNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pResidualConnectionReceiverNeuralNetHeader;
 	if (pResidualConnectionReceiverNeuralNetHeader == NULL) {
 		return FALSE;
 	}

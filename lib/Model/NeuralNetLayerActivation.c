@@ -39,25 +39,25 @@ typedef struct tagSoftmaxActivationNeuralNetHeader {
 //relu
 typedef struct tagReluActivationNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pX;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	flt32_t*		pX;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 } ReluActivationNeuralNetLayer;
 
 //tanh
 typedef struct tagTanhActivationNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pY;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	flt32_t*		pY;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 } TanhActivationNeuralNetLayer;
 
 //sigmoid
 typedef struct tagSigmoidActivationNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pY;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	flt32_t*		pY;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 } SigmoidActivationNeuralNetLayer;
 
 //softmax
 typedef struct tagSoftmaxActivationNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pY;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	flt32_t*		pY;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 } SoftmaxActivationNeuralNetLayer;
 
 
@@ -81,7 +81,7 @@ NeuralNetLayerActivation_getShape(handle_t hLayer, DataShape* pInputShape, DataS
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 //relu
 static
@@ -95,7 +95,7 @@ NeuralNetLayerReluActivation_forward(handle_t hLayer, PropagationInfo* pPropagat
 	uint32_t	inputDim;
 	flt32_t*	pX;
 	//---------------------------------------------------------------------------------
-	//‡“`”À
+	//‡“`”d
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	relu_forward(pPropagationInfo->pInputBuffer, pPropagationInfo->pOutputBuffer, size, pReluActivationNeuralNetHeader->alpha);
@@ -128,13 +128,12 @@ bool_t
 NeuralNetLayerTanhActivation_forward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	TanhActivationNeuralNetLayer*	pTanhNeuralNetLayer = (TanhActivationNeuralNetLayer*)pNeuralNetLayer;
-	TanhActivationNeuralNetHeader*	pTanhActivationNeuralNetHeader = (TanhActivationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
 	uint32_t	size;
 	flt32_t*	pOutput;
 	uint32_t	outputDim;
 	flt32_t*	pY;
 	//---------------------------------------------------------------------------------
-	//‡“`”À
+	//‡“`”d
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	tanh_forward(pPropagationInfo->pInputBuffer, pPropagationInfo->pOutputBuffer, size);
@@ -167,13 +166,12 @@ bool_t
 NeuralNetLayerSigmoidActivation_forward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	SigmoidActivationNeuralNetLayer*	pSigmoidActivationNeuralNetLayer = (SigmoidActivationNeuralNetLayer*)pNeuralNetLayer;
-	SigmoidActivationNeuralNetHeader*	pSigmoidActivationNeuralNetHeader = (SigmoidActivationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
 	uint32_t	size;
 	flt32_t*	pOutput;
 	uint32_t	outputDim;
 	flt32_t*	pY;
 	//---------------------------------------------------------------------------------
-	//‡“`”À
+	//‡“`”d
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	sigmoid_forward(pPropagationInfo->pInputBuffer, pPropagationInfo->pOutputBuffer, size);
@@ -206,13 +204,12 @@ bool_t
 NeuralNetLayerSoftmaxActivation_forward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	SoftmaxActivationNeuralNetLayer*	pSoftmaxActivationNeuralNetLayer = (SoftmaxActivationNeuralNetLayer*)pNeuralNetLayer;
-	SoftmaxActivationNeuralNetHeader*	pSoftmaxActivationNeuralNetHeader = (SoftmaxActivationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
 	uint32_t	size;
 	flt32_t*	pOutput;
 	uint32_t	outputDim;
 	flt32_t*	pY;
 	//---------------------------------------------------------------------------------
-	//‡“`”À
+	//‡“`”d
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	softmax_forward(pPropagationInfo->pInputBuffer, pPropagationInfo->pOutputBuffer, size);
@@ -240,7 +237,7 @@ NeuralNetLayerSoftmaxActivation_forward(handle_t hLayer, PropagationInfo* pPropa
 }
 
 //=====================================================================================
-//  ‹t“`”À
+//  ‹t“`”d
 //=====================================================================================
 //relu
 static
@@ -251,18 +248,18 @@ NeuralNetLayerReluActivation_backward(handle_t hLayer,PropagationInfo* pPropagat
 	ReluActivationNeuralNetHeader*	pReluActivationNeuralNetHeader = (ReluActivationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
 	uint32_t	size;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”À
+	//‹t“`”d
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	relu_backward(pReluActivationNeuralNetLayer->pX, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size, pReluActivationNeuralNetHeader->alpha);
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^Œ`ó
+	//‹t“`”do—Íƒf[ƒ^Œ`ó
 	//---------------------------------------------------------------------------------
 	//•ÏX–³‚µ
 	return TRUE;
@@ -276,19 +273,19 @@ NeuralNetLayerTanhActivation_backward(handle_t hLayer, PropagationInfo* pPropaga
 	TanhActivationNeuralNetLayer* pTanhActivationNeuralNetLayer = (TanhActivationNeuralNetLayer*)pNeuralNetLayer;
 	uint32_t	size;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”À
+	//‹t“`”d
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	//”÷•ªF1 - y*y
 	tanh_backward(pTanhActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^Œ`ó
+	//‹t“`”do—Íƒf[ƒ^Œ`ó
 	//---------------------------------------------------------------------------------
 	//•ÏX–³‚µ
 	return TRUE;
@@ -302,19 +299,19 @@ NeuralNetLayerSigmoidActivation_backward(handle_t hLayer, PropagationInfo* pProp
 	SigmoidActivationNeuralNetLayer* pSigmoidActivationNeuralNetLayer = (SigmoidActivationNeuralNetLayer*)pNeuralNetLayer;
 	uint32_t	size;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”À
+	//‹t“`”d
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	//”÷•ªFy(1 - y)
 	sigmoid_backward(pSigmoidActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^Œ`ó
+	//‹t“`”do—Íƒf[ƒ^Œ`ó
 	//---------------------------------------------------------------------------------
 	//•ÏX–³‚µ
 	return TRUE;
@@ -328,19 +325,19 @@ NeuralNetLayerSoftmaxActivation_backward(handle_t hLayer, PropagationInfo* pProp
 	SoftmaxActivationNeuralNetLayer* pSoftmaxActivationNeuralNetLayer = (SoftmaxActivationNeuralNetLayer*)pNeuralNetLayer;
 	uint32_t	size;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”À
+	//‹t“`”d
 	//---------------------------------------------------------------------------------
 	size = pPropagationInfo->dataShape.height * pPropagationInfo->dataShape.width * pPropagationInfo->dataShape.channel;
 	//”÷•ªFy(1 - y) //o—Í‚Æ“¯‚¶ŽŸŒ³‚Ìê‡‚Ísigmoid‚Æ“¯‚¶
 	softmax_backward(pSoftmaxActivationNeuralNetLayer->pY, pPropagationInfo->pOutputBuffer, pPropagationInfo->pInputBuffer, size);
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^Œ`ó
+	//‹t“`”do—Íƒf[ƒ^Œ`ó
 	//---------------------------------------------------------------------------------
 	//•ÏX–³‚µ
 	return TRUE;
@@ -597,7 +594,6 @@ NeuralNetLayerActivation_getHyperParameters(handle_t hLayer, flt32_t* pParameter
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	ActivationNeuralNetHeader* pActivationNeuralNetHeader = (ActivationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
 	ReluActivationNeuralNetHeader* pReluActivationNeuralNetHeader = (ReluActivationNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pReluActivationNeuralNetHeader;
 	if (pReluActivationNeuralNetHeader == NULL) {
 		return FALSE;
 	}

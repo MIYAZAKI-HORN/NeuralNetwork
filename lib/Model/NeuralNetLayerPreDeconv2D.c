@@ -106,7 +106,7 @@ NeuralNetLayerPreDeconv2D_getShape(handle_t hLayer, DataShape* pInputShape, Data
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 static
 bool_t
@@ -219,7 +219,7 @@ NeuralNetLayerPreDeconv2D_forward(handle_t hLayer, PropagationInfo* pPropagation
 }
 
 //=====================================================================================
-//  ‹t“`”À
+//  ‹t“`”d
 //=====================================================================================
 static
 bool_t
@@ -250,7 +250,7 @@ NeuralNetLayerPreDeconv2D_backward(handle_t hLayer, PropagationInfo* pPropagatio
 	int32_t		pos;
 	bool_t		fStatus;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -284,7 +284,7 @@ NeuralNetLayerPreDeconv2D_backward(handle_t hLayer, PropagationInfo* pPropagatio
 	strideHeight = pPreDeconv2DNeuralNetHeader->strideHeight;
 	strideWidth = pPreDeconv2DNeuralNetHeader->strideWidth;
 	//---------------------------------------------------------------------------------
-	//‹t“`”ÀŒë·ƒoƒbƒtƒ@[‚ð‰Šú‰»‚·‚é
+	//‹t“`”dŒë·ƒoƒbƒtƒ@[‚ð‰Šú‰»‚·‚é
 	//---------------------------------------------------------------------------------
 	i = inHeight * inWidth * inChannel;
 	pInputData = pPropagationInfo->pInputBuffer;
@@ -331,7 +331,7 @@ NeuralNetLayerPreDeconv2D_backward(handle_t hLayer, PropagationInfo* pPropagatio
 		posH += strideHeight;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”À‚Ì“ü—Íƒf[ƒ^Œ`ó)
+	//‹t“`”do—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”d‚Ì“ü—Íƒf[ƒ^Œ`ó)
 	//---------------------------------------------------------------------------------
 	DataShape_construct(&pPropagationInfo->dataShape, inHeight, inWidth, inChannel);
 	return TRUE;
@@ -434,7 +434,6 @@ bool_t
 NeuralNetLayerPreDeconv2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	PreDeconv2DNeuralNetHeader* pPreDeconv2DNeuralNetHeader = (PreDeconv2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pPreDeconv2DNeuralNetHeader;
 	if (pPreDeconv2DNeuralNetHeader == NULL) {
 		return FALSE;
 	}

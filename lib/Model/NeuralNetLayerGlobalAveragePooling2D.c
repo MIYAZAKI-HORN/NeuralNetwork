@@ -39,7 +39,7 @@ NeuralNetLayerGlobalAveragePooling2D_getShape(handle_t hLayer, DataShape* pInput
 }
 
 //=====================================================================================
-//  MaxPooling層　順伝搬
+//  MaxPooling層　順伝播
 //=====================================================================================
 bool_t
 NeuralNetLayerGlobalAveragePooling2D_forward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
@@ -50,19 +50,9 @@ NeuralNetLayerGlobalAveragePooling2D_forward(handle_t hLayer, PropagationInfo* p
 	uint32_t	inHeight;
 	uint32_t	inWidth;
 	uint32_t	inChannel;
-	uint32_t	inPixels;
-	//一時変数
 	bool_t		fEnableLearning;
 	flt32_t*	pInputBuffer;
 	flt32_t*	pOutputBuffer;
-	flt32_t*	pChannelInput;
-	flt32_t*	pInput;
-	flt32_t*	pOutput;
-	flt32_t		normalizationFactor;
-	flt32_t		averageValue;
-	//データ位置
-	uint32_t	iP;
-	uint32_t	iC;
 	//---------------------------------------------------------------------------------
 	//パラメタは一時変数で利用
 	//---------------------------------------------------------------------------------
@@ -75,24 +65,7 @@ NeuralNetLayerGlobalAveragePooling2D_forward(handle_t hLayer, PropagationInfo* p
 	//------------------------------------------------------------------------------------------
 	//平均値プーリング
 	//------------------------------------------------------------------------------------------
-	inPixels = inHeight * inWidth;
-	normalizationFactor = 1.0f / (flt32_t)inPixels;
-	pChannelInput = pInputBuffer;
-	pOutput = pOutputBuffer;
-	iC = inChannel;
-	while(iC--) {
-		//チャネルごとの平均値を計算
-		averageValue = 0.0f;
-		pInput = pChannelInput;	//入力バッファ(チャンネル先頭)
-		iP = inPixels;
-		while(iP--) {
-			averageValue += *pInput;
-			pInput += inChannel;	//次のチャネルデータへ移動
-		}
-		averageValue *= normalizationFactor;
-		*pOutput++ = averageValue;
-		pChannelInput++;
-	}
+	global_average_pooling2D_forward(pInputBuffer, pOutputBuffer, inHeight, inWidth, inChannel);
 	//---------------------------------------------------------------------------------
 	//出力データサイズ形状
 	//---------------------------------------------------------------------------------
@@ -101,7 +74,7 @@ NeuralNetLayerGlobalAveragePooling2D_forward(handle_t hLayer, PropagationInfo* p
 }
 
 //=====================================================================================
-//  逆伝搬
+//  逆伝播
 //=====================================================================================
 bool_t
 NeuralNetLayerGlobalAveragePooling2D_backward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
@@ -113,19 +86,11 @@ NeuralNetLayerGlobalAveragePooling2D_backward(handle_t hLayer, PropagationInfo* 
 	uint32_t	inHeight;
 	uint32_t	inWidth;
 	uint32_t	inChannel;
-	uint32_t	inPixels;
-	//一時変数
 	flt32_t*	pInputBuffer;
 	flt32_t*	pOutputBuffer;
-	flt32_t		normalizationFactor;
-	flt32_t*	pDLossArray;
-	flt32_t*	pChannelInput;
 	flt32_t*	pInput;
-	//データ位置
-	uint32_t	iP;
-	uint32_t	iC;
 	//---------------------------------------------------------------------------------
-	//逆伝搬対象でない場合はエラー
+	//逆伝播対象でない場合はエラー
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -150,23 +115,9 @@ NeuralNetLayerGlobalAveragePooling2D_backward(handle_t hLayer, PropagationInfo* 
 	//------------------------------------------------------------------------------------------
 	//平均値プーリング
 	//------------------------------------------------------------------------------------------
-	inPixels = inHeight * inWidth;
-	normalizationFactor = 1.0f / (flt32_t)inPixels;
-	pDLossArray = pOutputBuffer;
-	pChannelInput = pInputBuffer;
-	iC = inChannel;
-	while (iC--) {
-		pInput = pChannelInput;	//入力バッファ(チャンネル先頭)
-		iP = inPixels;
-		while (iP--) {
-			*pInput = (*pDLossArray) * normalizationFactor;
-			pInput += inChannel;	//次のチャネルデータへ移動
-		}
-		pDLossArray++;
-		pChannelInput++;
-	}
+	global_average_pooling2D_backward(pInputBuffer, pOutputBuffer, inHeight, inWidth, inChannel);
 	//---------------------------------------------------------------------------------
-	//逆伝搬出力データサイズ形状(順伝搬の入力データ形状)
+	//逆伝播出力データサイズ形状(順伝播の入力データ形状)
 	//---------------------------------------------------------------------------------
 	DataShape_construct(&pPropagationInfo->dataShape, inHeight, inWidth, inChannel);
 	return TRUE;
@@ -261,7 +212,6 @@ bool_t
 NeuralNetLayerGlobalAveragePooling2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	GlobalAveragePooling2DNeuralNetHeader* pGlobalAveragePooling2DNeuralNetHeader = (GlobalAveragePooling2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pGlobalAveragePooling2DNeuralNetHeader;
 	if (pGlobalAveragePooling2DNeuralNetHeader == NULL) {
 		return FALSE;
 	}

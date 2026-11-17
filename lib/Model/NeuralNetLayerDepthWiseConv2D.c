@@ -23,7 +23,7 @@ typedef struct tagDepthwiseConv2DNeuralNetHeader {
 //=====================================================================================
 typedef struct tagDepthwiseConv2DNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pX;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	flt32_t*		pX;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 	handle_t		hOptimizer;		//ƒIƒvƒeƒBƒ}ƒCƒU[ƒnƒ“ƒhƒ‹
 } DepthwiseConv2DNeuralNetLayer;
 
@@ -153,7 +153,7 @@ NeuralNetLayerDepthwiseConv2D_getLayerParameter(
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 static
 bool_t
@@ -336,7 +336,7 @@ NeuralNetLayerDepthwiseConv2D_forward(handle_t hLayer, PropagationInfo* pPropaga
 }
 
 //=====================================================================================
-//  ‹t“`”À
+//  ‹t“`”d
 //=====================================================================================
 #define OUT_OF_REGION_INDICATION_VALUE	(0xFFFFFFFF)
 static
@@ -392,7 +392,7 @@ NeuralNetLayerDepthwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 	flt32_t*	pDFilterHead;
 	OptimizerFunctionTable optimizerFunctionTable;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -447,7 +447,7 @@ NeuralNetLayerDepthwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 	//---------------------------------------------------------------------------------
 	pDFilterHead	= pDDWFilter;
 	//---------------------------------------------------------------------------------
-	//‹t“`”ÀŒë·ƒoƒbƒtƒ@[‚ð‰Šú‰»‚·‚é
+	//‹t“`”dŒë·ƒoƒbƒtƒ@[‚ð‰Šú‰»‚·‚é
 	//---------------------------------------------------------------------------------
 	dataSize = inHeight * inWidth * inChannel;
 	pInputData = pInputBuffer;
@@ -523,14 +523,14 @@ NeuralNetLayerDepthwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 						//ƒf[ƒ^ˆÊ’u
 						//----------------------------------------------------------
 						if (*pExtractedDataIndex != OUT_OF_REGION_INDICATION_VALUE) {
-							pInputData = pInputBuffer + *pExtractedDataIndex;	//‹t“`”Ào—ÍF‡“`”À‚Ì“ü—Í•ûŒü‚Ö“n‚·”÷•ª’l
-							pXData = pXDataArray + *pExtractedDataIndex;		//‡“`”ÀŽž‚Ì“ü—Í’lX
+							pInputData = pInputBuffer + *pExtractedDataIndex;	//‹t“`”do—ÍF‡“`”d‚Ì“ü—Í•ûŒü‚Ö“n‚·”÷•ª’l
+							pXData = pXDataArray + *pExtractedDataIndex;		//‡“`”dŽž‚Ì“ü—Í’lX
 							//----------------------------------------------------------
 							//ƒtƒBƒ‹ƒ^[ŒW”(ŠwKƒpƒ‰ƒƒ^)”÷•ª’l‚ÖÏŽZ
 							//----------------------------------------------------------
 							*pDFilterHead += (*pXData) * deltaLoss;
 							//----------------------------------------------------------
-							//‹t“`”Ào—Í‚ÖÏŽZ
+							//‹t“`”do—Í‚ÖÏŽZ
 							//----------------------------------------------------------
 							*pInputData += (*pFilterHead) * deltaLoss;
 						}
@@ -549,7 +549,7 @@ NeuralNetLayerDepthwiseConv2D_backward(handle_t hLayer, PropagationInfo* pPropag
 		}
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”À‚Ì“ü—Íƒf[ƒ^Œ`ó)
+	//‹t“`”do—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”d‚Ì“ü—Íƒf[ƒ^Œ`ó)
 	//---------------------------------------------------------------------------------
 	DataShape_construct(&pPropagationInfo->dataShape, inHeight, inWidth, inChannel);
 	return TRUE;
@@ -728,7 +728,6 @@ bool_t
 NeuralNetLayerDepthwiseConv2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	DepthwiseConv2DNeuralNetHeader* pDepthwiseConv2DNeuralNetHeader = (DepthwiseConv2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pDepthwiseConv2DNeuralNetHeader;
 	if (pDepthwiseConv2DNeuralNetHeader == NULL) {
 		return FALSE;
 	}

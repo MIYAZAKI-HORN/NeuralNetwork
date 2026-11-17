@@ -24,7 +24,7 @@ typedef struct tagConv2DNeuralNetHeader {
 //=====================================================================================
 typedef struct tagConv2DNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pX;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	flt32_t*		pX;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 	handle_t		hOptimizer;		//ƒIƒvƒeƒBƒ}ƒCƒU[ƒnƒ“ƒhƒ‹
 } Conv2DNeuralNetLayer;
 
@@ -154,7 +154,7 @@ NeuralNetLayerConv2D_getLayerParameter(Conv2DNeuralNetHeader* pConv2DNeuralNetHe
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 #define OUT_OF_REGION_INDICATION_VALUE	(0xFFFFFFFF)
 
@@ -340,7 +340,7 @@ NeuralNetLayerConv2D_forward(handle_t hLayer, PropagationInfo* pPropagationInfo)
 }
 
 //=====================================================================================
-//  ‹t“`”À
+//  ‹t“`”d
 //=====================================================================================
 static
 bool_t
@@ -398,7 +398,7 @@ NeuralNetLayerConv2D_backward(handle_t hLayer, PropagationInfo* pPropagationInfo
 	bool_t		fStatus;
 	OptimizerFunctionTable optimizerFunctionTable;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -519,7 +519,7 @@ NeuralNetLayerConv2D_backward(handle_t hLayer, PropagationInfo* pPropagationInfo
 			i = nFilter;
 			while (i--) {
 				//----------------------------------------------------------
-				//‹t“`”À“ü—Í‚Ì“`”ÀŒë·”÷•ª’l
+				//‹t“`”d“ü—Í‚Ì“`”ÀŒë·”÷•ª’l
 				//----------------------------------------------------------
 				deltaLoss = (*pDLossArray++);
 				//----------------------------------------------------------
@@ -536,14 +536,14 @@ NeuralNetLayerConv2D_backward(handle_t hLayer, PropagationInfo* pPropagationInfo
 				j = nFilterSize;
 				while (j--) {
 					if (*pExtractedDataIndex != OUT_OF_REGION_INDICATION_VALUE) {
-						pInputData = pPropagationInfo->pInputBuffer + *pExtractedDataIndex;	//”÷•ª’l‚ð‡“`”À‚Ì“ü—Í•ûŒü‚Ö“n‚·ƒoƒbƒtƒ@ˆÊ’u
-						pXData = pXDataArray + *pExtractedDataIndex;		//‡“`”ÀŽž‚É•ÛŽ‚µ‚½“ü—Í’lX
+						pInputData = pPropagationInfo->pInputBuffer + *pExtractedDataIndex;	//”÷•ª’l‚ð‡“`”d‚Ì“ü—Í•ûŒü‚Ö“n‚·ƒoƒbƒtƒ@ˆÊ’u
+						pXData = pXDataArray + *pExtractedDataIndex;		//‡“`”dŽž‚É•ÛŽ‚µ‚½“ü—Í’lX
 						//----------------------------------------------------------
 						//ƒtƒBƒ‹ƒ^[ŒW””÷•ª’l‚ÖÏŽZ
 						//----------------------------------------------------------
 						*pDFilterHead += (*pXData) * deltaLoss;
 						//----------------------------------------------------------
-						//‹t“`”Ào—ÍiinputBufferj‚ÖÏŽZ
+						//‹t“`”do—ÍiinputBufferj‚ÖÏŽZ
 						//----------------------------------------------------------
 						*pInputData += (*pFilterHead) * deltaLoss;
 					}
@@ -560,7 +560,7 @@ NeuralNetLayerConv2D_backward(handle_t hLayer, PropagationInfo* pPropagationInfo
 		iCornerInHeight += strideHeight;	//ƒXƒgƒ‰ƒCƒh•ªˆÚ“® 
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”Ào—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”À‚Ì“ü—Íƒf[ƒ^Œ`ó)
+	//‹t“`”do—Íƒf[ƒ^ƒTƒCƒYŒ`ó(‡“`”d‚Ì“ü—Íƒf[ƒ^Œ`ó)
 	//---------------------------------------------------------------------------------
 	DataShape_construct(&pPropagationInfo->dataShape, inHeight, inWidth, inChannel);
 	return TRUE;
@@ -721,7 +721,6 @@ bool_t
 NeuralNetLayerConv2D_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	Conv2DNeuralNetHeader* pConv2DNeuralNetHeader = (Conv2DNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pConv2DNeuralNetHeader;
 	if (pConv2DNeuralNetHeader == NULL) {
 		return FALSE;
 	}

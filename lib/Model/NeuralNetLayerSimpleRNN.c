@@ -20,9 +20,9 @@ typedef struct tagSimpleRNNNeuralNetHeader {
 //=====================================================================================
 typedef struct tagSimpleRNNNeuralNetLayer {
 	NeuralNetLayer	super;					//base layer class
-	flt32_t*		pX;						//誤差逆伝搬用データバッファ：Wへの最終入力　timeStepsの入力値
-	flt32_t*		pH;						//誤差逆伝搬用データバッファ：出力値　timeSteps分の出力値
-	flt32_t*		pBPData;				//誤差逆伝搬用データバッファ：内部活性化関数への最終入力または内部活性化関数からの最終出力　timeSteps分の出力値
+	flt32_t*		pX;						//誤差逆伝播用データバッファ：Wへの最終入力　timeStepsの入力値
+	flt32_t*		pH;						//誤差逆伝播用データバッファ：出力値　timeSteps分の出力値
+	flt32_t*		pBPData;				//誤差逆伝播用データバッファ：内部活性化関数への最終入力または内部活性化関数からの最終出力　timeSteps分の出力値
 	flt32_t*		pTimeLossBuffer;		//出力サイズの逆伝播作業用バッファー：1時間分の出力値
 	uint32_t		maxPropagationTime;		//最大誤差伝播時間
 	handle_t		hOptimizer;				//オプティマイザーハンドル
@@ -61,7 +61,7 @@ NeuralNetLayerSimpleRNN_getShape(handle_t hLayer, DataShape* pInputShape, DataSh
 }
 
 //=====================================================================================
-//  順伝搬計算
+//  順伝播計算
 //=====================================================================================
 static
 bool_t
@@ -115,7 +115,7 @@ NeuralNetLayerSimpleRNN_forward(handle_t hLayer, PropagationInfo* pPropagationIn
 	pTimeIn = pPropagationInfo->pInputBuffer;
 	for (t = 0; t < timeSteps; t++) {
 		//------------------------------------------------------
-		// 誤差逆伝搬：Wブロックへの入力
+		// 誤差逆伝播：Wブロックへの入力
 		//------------------------------------------------------
 		if (pNeuralNetLayer->fEnableLearning == TRUE) {
 			pInput = pTimeIn;
@@ -147,7 +147,7 @@ NeuralNetLayerSimpleRNN_forward(handle_t hLayer, PropagationInfo* pPropagationIn
 			weight_matrix_with_bias_forward(pUnitOut, pSimpleRNNNeuralNetHeader->unit, pU,NULL, pTimeOut, pSimpleRNNNeuralNetHeader->unit,TRUE);
 		}
 		//------------------------------------------------------
-		//誤差逆伝搬計算で活性化関数への入力を利用する場合:relu
+		//誤差逆伝播計算で活性化関数への入力を利用する場合:relu
 		//------------------------------------------------------
 		if (pNeuralNetLayer->fEnableLearning == TRUE ) {
 			switch (pSimpleRNNNeuralNetHeader->activation) {
@@ -183,7 +183,7 @@ NeuralNetLayerSimpleRNN_forward(handle_t hLayer, PropagationInfo* pPropagationIn
 			return FALSE;
 		}
 		//------------------------------------------------------
-		//誤差逆伝搬計算で活性化関数への出力値を利用する場合：hyperbolic_tangent,sigmoid
+		//誤差逆伝播計算で活性化関数への出力値を利用する場合：hyperbolic_tangent,sigmoid
 		//------------------------------------------------------
 		if (pNeuralNetLayer->fEnableLearning == TRUE ) {
 			//出力値を利用する場合
@@ -203,7 +203,7 @@ NeuralNetLayerSimpleRNN_forward(handle_t hLayer, PropagationInfo* pPropagationIn
 			}
 		}
 		//------------------------------------------------------
-		//誤差逆伝搬：Uへの入力　h(t)
+		//誤差逆伝播：Uへの入力　h(t)
 		//------------------------------------------------------
 		if (pNeuralNetLayer->fEnableLearning == TRUE) {
 			pInput	= pTimeOut;
@@ -254,7 +254,7 @@ NeuralNetLayerSimpleRNN_forward(handle_t hLayer, PropagationInfo* pPropagationIn
 }
 
 //=====================================================================================
-//  逆伝搬計算
+//  逆伝播計算
 //=====================================================================================
 static
 bool_t
@@ -287,7 +287,7 @@ NeuralNetLayerSimpleRNN_backward(handle_t hLayer,PropagationInfo* pPropagationIn
 	int32_t		lastTime;
 	OptimizerFunctionTable optimizerInterface;
 	//---------------------------------------------------------------------------------
-	//逆伝搬対象でない場合はエラー
+	//逆伝播対象でない場合はエラー
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -398,8 +398,8 @@ NeuralNetLayerSimpleRNN_backward(handle_t hLayer,PropagationInfo* pPropagationIn
 			pInputTime = pPropagationInfo->pInputBuffer + frameTime * nInputDim;
 			pInputWX = pSimpleRNNLayer->pX + frameTime * nInputDim;
 			weight_matrix_with_bias_backward(
-				pInputTime,							//誤差出力（順伝搬時入力）
-				nInputDim,							//誤差出力次元（順伝搬時入力次元）
+				pInputTime,							//誤差出力（順伝播時入力）
+				nInputDim,							//誤差出力次元（順伝播時入力次元）
 				pW,									//W重み
 				pOutputTime,						//内部活性化関数から出力される誤差を保持するバッファ領域
 				pSimpleRNNNeuralNetHeader->unit,	//出力次元
@@ -424,8 +424,8 @@ NeuralNetLayerSimpleRNN_backward(handle_t hLayer,PropagationInfo* pPropagationIn
 				//---------------------------------------------------------------------------------
 				pH = pSimpleRNNLayer->pH + (frameTime - 1) * pSimpleRNNNeuralNetHeader->unit;
 				weight_matrix_with_bias_backward(
-					pSimpleRNNLayer->pTimeLossBuffer,	//U誤差出力（順伝搬時U入力）
-					pSimpleRNNNeuralNetHeader->unit,		//誤差出力次元（順伝搬時U入力次元）
+					pSimpleRNNLayer->pTimeLossBuffer,	//U誤差出力（順伝播時U入力）
+					pSimpleRNNNeuralNetHeader->unit,		//誤差出力次元（順伝播時U入力次元）
 					pU,									//U重み
 					pOutputTime,						//内部活性化関数から出力される誤差を保持するバッファ領域
 					pSimpleRNNNeuralNetHeader->unit,		//U出力次元
@@ -436,7 +436,7 @@ NeuralNetLayerSimpleRNN_backward(handle_t hLayer,PropagationInfo* pPropagationIn
 				//---------------------------------------------------------------------------------
 				//Uブロックから出力される誤差で誤差伝播バッファを置き換える
 				//pOutputTimeはt時刻のデータバッファであるが、この後利用されないため、
-				//次の時刻（前の時刻）の逆伝搬用のデータバッファとして再利用されている
+				//次の時刻（前の時刻）の逆伝播用のデータバッファとして再利用されている
 				//---------------------------------------------------------------------------------
 				size = pSimpleRNNNeuralNetHeader->unit;
 				pOutput = pOutputTime;
@@ -447,7 +447,7 @@ NeuralNetLayerSimpleRNN_backward(handle_t hLayer,PropagationInfo* pPropagationIn
 			}
 		}
 		//---------------------------------------------------------------------------------
-		//順伝搬でこれ以上の出力がない
+		//順伝播でこれ以上の出力がない
 		//---------------------------------------------------------------------------------
 		if (pSimpleRNNNeuralNetHeader->returnSequence == FALSE) {
 			break;
@@ -665,7 +665,6 @@ bool_t
 NeuralNetLayerSimpleRNN_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	SimpleRNNNeuralNetHeader* pSimpleRNNNeuralNetHeader = (SimpleRNNNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pSimpleRNNNeuralNetHeader;
 	if (pSimpleRNNNeuralNetHeader == NULL) {
 		return FALSE;
 	}

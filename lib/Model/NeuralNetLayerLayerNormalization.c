@@ -19,7 +19,7 @@ typedef struct tagLayerNormalizationNeuralNetHeader {
 //=====================================================================================
 typedef struct tagLayerNormalizationNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pX;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@Fx
+	flt32_t*		pX;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@Fx
 	flt32_t			mean;
 	flt32_t			invStd;
 	handle_t		hOptimizer;		//ƒIƒvƒeƒBƒ}ƒCƒU[ƒnƒ“ƒhƒ‹
@@ -47,7 +47,7 @@ NeuralNetLayerLayerNormalization_getShape(handle_t hLayer, DataShape* pInputShap
 }
 
 //=====================================================================================
-//  ‡“`”ÀŒvŽZ
+//  ‡“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -91,15 +91,15 @@ NeuralNetLayerLayerNormalization_forward_calculation(
 	//•½‹Ï’l‚Æ•ªŽU‚ð•ÛŽ
 	*pMean = mean;
 	*pInvStd = invVar;
-	//‡“`”Àƒf[ƒ^
+	//‡“`”dƒf[ƒ^
 	i = size;
 	while (i--) {
 		x = *pInputBuffer++;
 		X = (x - mean) * invVar;
-		//‡“`”Ào—Í
+		//‡“`”do—Í
 		y = gamma * X + beta;
 		*pOutputBuffer++ = y;
-		//‹t“`”À—p•ÛŽ
+		//‹t“`”d—p•ÛŽ
 		if (pX != NULL) {
 			*pX++ = X;	//gamma‚Ì”÷•ª’l‚Æ‚Æ‚µ‚Ä•ÛŽFy = gamma * X + beta
 		}
@@ -108,7 +108,7 @@ NeuralNetLayerLayerNormalization_forward_calculation(
 }
 
 //=====================================================================================
-//  ‹t“`”ÀŒvŽZ
+//  ‹t“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -126,7 +126,7 @@ NeuralNetLayerLayerNormalization_backward_calculation(
 	flt32_t*	pInput;
 	flt32_t*	pDLossArray;
 	//---------------------------------------------------------------------------------
-	//ƒpƒ‰ƒƒ^‚ÌŒë·‹t“`”À
+	//ƒpƒ‰ƒƒ^‚ÌŒë·‹t“`”d
 	//---------------------------------------------------------------------------------
 	pDLossArray = pOutputBuffer;
 	pInput = pInputBuffer;
@@ -135,7 +135,7 @@ NeuralNetLayerLayerNormalization_backward_calculation(
 		//ƒpƒ‰ƒƒ^”÷•ª’l
 		*pDGamma += (*pX++) * (*pDLossArray);
 		*pDBeta += (*pDLossArray);
-		//‹t“`”À
+		//‹t“`”d
 		*pInput++ += gamma * invStd * (*pDLossArray);
 		//‹t“`“ü—Í’l“`”ÀŒë·”÷•ª’lƒ|ƒCƒ“ƒ^XV
 		pDLossArray++;
@@ -144,7 +144,7 @@ NeuralNetLayerLayerNormalization_backward_calculation(
 }
 
 //=====================================================================================
-//  ‡“`”À
+//  ‡“`”d
 //=====================================================================================
 static
 bool_t
@@ -219,7 +219,7 @@ NeuralNetLayerLayerNormalization_forward(handle_t hLayer, PropagationInfo* pProp
 }
 
 //=====================================================================================
-//  ‹t“`”ÀŒvŽZ
+//  ‹t“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -240,7 +240,7 @@ NeuralNetLayerLayerNormalization_backward(handle_t hLayer,PropagationInfo* pProp
 	uint32_t	inChannel;
 	OptimizerFunctionTable optimizerFunctionTable;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -275,7 +275,7 @@ NeuralNetLayerLayerNormalization_backward(handle_t hLayer,PropagationInfo* pProp
 		*pInput++ = 0.0f;
 	}
 	//---------------------------------------------------------------------------------
-	//‹t“`”ÀŒvŽZ
+	//‹t“`”dŒvŽZ
 	//---------------------------------------------------------------------------------
 	size = inHeight * inWidth * inChannel;
 	NeuralNetLayerLayerNormalization_backward_calculation(size,*pGamma,pLayerNormalizationLayer->invStd,pLayerNormalizationLayer->pX,pDGamma,pDBeta,pPropagationInfo->pInputBuffer,pPropagationInfo->pOutputBuffer);

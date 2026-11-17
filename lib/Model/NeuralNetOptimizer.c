@@ -150,7 +150,7 @@ NeuralNetworkOptimizerSGD_construct(uint32_t parameterSize, uint32_t batchSize, 
 	//  ワークエリアチェック
 	//----------------------------------------------------------------------------------
 	requiredSizeOfWorkAreaIn32BitWord = NeuralNetworkOptimizerSGD_getSizeIn32BitWord(parameterSize);
-	if (requiredSizeOfWorkAreaIn32BitWord == 0) {
+	if (pWorkArea == NULL || sizeOfWorkAreaIn32BitWord < requiredSizeOfWorkAreaIn32BitWord) {
 		return NULL;
 	}
 	//----------------------------------------------------------------------------------
@@ -336,7 +336,7 @@ NeuralNetworkOptimizerRMSprop_construct(uint32_t parameterSize, uint32_t batchSi
 	//  ワークエリアチェック
 	//----------------------------------------------------------------------------------
 	requiredSizeOfWorkAreaIn32BitWord = NeuralNetworkOptimizerRMSprop_getSizeIn32BitWord(parameterSize);
-	if (requiredSizeOfWorkAreaIn32BitWord == 0) {
+	if (pWorkArea == NULL || sizeOfWorkAreaIn32BitWord < requiredSizeOfWorkAreaIn32BitWord) {
 		return NULL;
 	}
 	//----------------------------------------------------------------------------------
@@ -519,7 +519,7 @@ NeuralNetworkOptimizerAdam_construct(uint32_t parameterSize, uint32_t batchSize,
 	//  ワークエリアチェック
 	//----------------------------------------------------------------------------------
 	requiredSizeOfWorkAreaIn32BitWord = NeuralNetworkOptimizerAdam_getSizeIn32BitWord(parameterSize);
-	if (requiredSizeOfWorkAreaIn32BitWord == 0) {
+	if (pWorkArea == NULL || sizeOfWorkAreaIn32BitWord < requiredSizeOfWorkAreaIn32BitWord) {
 		return NULL;
 	}
 	//----------------------------------------------------------------------------------
@@ -691,18 +691,18 @@ NeuralNetOptimizer_getInterfaceByType(NeuralNetOptimizerType type, OptimizerFunc
 	bool_t fStatus = FALSE;
 	switch (type) {
 	case NEURAL_NET_OPTIMIZER_SGD:
-		NeuralNetworkOptimizerSGC_getInterface(pInterface);
+		fStatus = NeuralNetworkOptimizerSGC_getInterface(pInterface);
 		break;
 	case NEURAL_NET_OPTIMIZER_RMSPROP:
-		NeuralNetworkOptimizerRMSprop_getInterface(pInterface);
+		fStatus = NeuralNetworkOptimizerRMSprop_getInterface(pInterface);
 		break;
 	case NEURAL_NET_OPTIMIZER_ADAM:
-		NeuralNetworkOptimizerAdam_getInterface(pInterface);
+		fStatus = NeuralNetworkOptimizerAdam_getInterface(pInterface);
 		break;
 	default:
 		return FALSE;
 	}
-	return TRUE;
+	return fStatus;
 }
 
 bool_t

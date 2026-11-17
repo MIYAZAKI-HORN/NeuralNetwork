@@ -19,12 +19,12 @@ typedef struct tagDenseNeuralNetHeader {
 //=====================================================================================
 typedef struct tagDenseNeuralNetLayer {
 	NeuralNetLayer	super;			//base layer class
-	flt32_t*		pX;				//Œë·‹t“`”À—pƒf[ƒ^ƒoƒbƒtƒ@
+	flt32_t*		pX;				//Œë·‹t“`”d—pƒf[ƒ^ƒoƒbƒtƒ@
 	handle_t		hOptimizer;		//ƒIƒvƒeƒBƒ}ƒCƒU[ƒnƒ“ƒhƒ‹
 } DenseNeuralNetLayer;
 
 //=====================================================================================
-//  DENSE‘w@‡“`”ÀŒvŽZ
+//  DENSE‘w@‡“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -45,7 +45,7 @@ NeuralNetLayerDense_getShape(handle_t hLayer, DataShape* pInputShape, DataShape*
 }
 
 //=====================================================================================
-//  DENSE‘w@‡“`”ÀŒvŽZ
+//  DENSE‘w@‡“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -95,7 +95,7 @@ NeuralNetLayerDense_forward(handle_t hLayer, PropagationInfo* pPropagationInfo) 
 }
 
 //=====================================================================================
-//  DENSE‘w@‹t“`”ÀŒvŽZ
+//  DENSE‘w@‹t“`”dŒvŽZ
 //=====================================================================================
 static
 bool_t
@@ -114,7 +114,7 @@ NeuralNetLayerDense_backward(handle_t hLayer, PropagationInfo* pPropagationInfo)
 	uint32_t	size;
 	OptimizerFunctionTable optimizerFunctionTable;
 	//---------------------------------------------------------------------------------
-	//‹t“`”À‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
+	//‹t“`”d‘ÎÛ‚Å‚È‚¢ê‡‚ÍƒGƒ‰[
 	//---------------------------------------------------------------------------------
 	if (pNeuralNetLayer->fEnableLearning == FALSE) {
 		return FALSE;
@@ -139,7 +139,7 @@ NeuralNetLayerDense_backward(handle_t hLayer, PropagationInfo* pPropagationInfo)
 		*pInput++ = 0.0f;
 	}
 	//---------------------------------------------------------------------------------
-	//d‚Ýƒpƒ‰ƒƒ^‚ÌŒë·‹t“`”À
+	//d‚Ýƒpƒ‰ƒƒ^‚ÌŒë·‹t“`”d
 	//---------------------------------------------------------------------------------
 	weight_matrix_with_bias_backward(pPropagationInfo->pInputBuffer, nInput, pW, pPropagationInfo->pOutputBuffer, pDenseNeuralNetHeader->unit, pDenseLayer->pX, pDWeight, pDBias);
 	//---------------------------------------------------------------------------------
@@ -294,7 +294,6 @@ bool_t
 NeuralNetLayerDense_getHyperParameters(handle_t hLayer, flt32_t* pParameterArray, uint32_t* pNumberOfParameters, uint32_t parameterArraySize) {
 	NeuralNetLayer* pNeuralNetLayer = (NeuralNetLayer*)hLayer;
 	DenseNeuralNetHeader* pDenseNeuralNetHeader = (DenseNeuralNetHeader*)pNeuralNetLayer->pLayerData;
-	NeuralNetHeader* pNeuralNetHeader = (NeuralNetHeader*)pDenseNeuralNetHeader;
 	if (pDenseNeuralNetHeader == NULL) {
 		return FALSE;
 	}

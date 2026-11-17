@@ -58,12 +58,12 @@ bool_t	NeuralNetLayer_getOrder(handle_t hLayer, uint32_t* pOrder);
 bool_t	NeuralNetLayer_getShape(handle_t hLayer, DataShape* pInputShape, DataShape* pOutputShape);
 
 //=====================================================================================
-//  èáì`î¿åvéZ
+//  èáì`îdåvéZ
 //=====================================================================================
 bool_t	NeuralNetLayer_forward(handle_t hLayer, PropagationInfo* pPropagationInfo);
 
 //=====================================================================================
-//  ãtì`î¿åvéZ
+//  ãtì`îdåvéZ
 //=====================================================================================
 bool_t	NeuralNetLayer_backward(handle_t hLayer, PropagationInfo* pPropagationInfo);
 

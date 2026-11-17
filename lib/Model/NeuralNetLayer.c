@@ -79,7 +79,7 @@ NeuralNetLayer_getShape(handle_t hLayer, DataShape* pInputShape, DataShape* pOut
 }
 
 //=====================================================================================
-//  èáì`î¿åvéZ
+//  èáì`îdåvéZ
 //=====================================================================================
 bool_t
 NeuralNetLayer_forward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
@@ -104,7 +104,7 @@ NeuralNetLayer_forward(handle_t hLayer, PropagationInfo* pPropagationInfo) {
 }
 
 //=====================================================================================
-//  ãtì`î¿åvéZ
+//  ãtì`îdåvéZ
 //=====================================================================================
 bool_t
 NeuralNetLayer_backward(handle_t hLayer, PropagationInfo* pPropagationInfo)
