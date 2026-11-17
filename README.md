@@ -18,6 +18,7 @@
 	BatchNormalization
 	LayerNormalization
 	Activation(relu/tanh/sigmoid/softmax)
+	Multi-Head Self-Attention
 	
 # General-purpose sequential neural network model by stacking the above layer modules
 	Neural networks can be automatically constructed by loading sequential (stacked) layer data with headers into the prepared SequentialNet API.
