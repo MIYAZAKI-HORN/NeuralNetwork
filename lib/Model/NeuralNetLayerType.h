@@ -22,8 +22,7 @@ typedef enum tagNetLayerType {
 	NET_LAYER_RESIDUAL_CONNECTION_SENDER	= 11,
 	NET_LAYER_RESIDUAL_CONNECTION_RECEIVER	= 12,
 	NET_LAYER_GLOBAL_AVERAGE_POOLING2D		= 13,
-	NET_LAYER_SELF_ATTENTION				= 14,
-	NET_LAYER_ATTENTION						= 15
+	NET_LAYER_SELF_ATTENTION				= 14
 } NetLayerType;
 
 //=====================================================================================
